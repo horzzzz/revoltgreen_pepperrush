@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "RevoltGreen PepperRush",
+    "slug": "revoltgreen_pepperrush",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "revoltgreenpepperrush",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "bundleIdentifier": "com.revoltgreen.pepperrush"
+    },
+    "android": {
+      "package": "com.revoltgreen.pepperrush",
+      "adaptiveIcon": {
+        "backgroundColor": "#FFFFFF",
+        "foregroundImage": "./assets/images/android-icon-foreground.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "output": "static",
+      "favicon": "./assets/images/icon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#000000",
+          "image": "./assets/images/splash/blank.png",
+          "imageWidth": 200
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}
