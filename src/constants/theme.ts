@@ -20,6 +20,25 @@ export const SplashColors = {
   text: '#ffffff',
 } as const;
 
+/** Menu tokens (Figma node 1:173). */
+export const MenuColors = {
+  /** Bottom scrim over the character art (node 1:177), from transparent down. */
+  scrimFrom: 'rgba(15,21,11,0)',
+  scrimTo: '#0f150b',
+  /** Plate behind the 18+ notice (node 1:182). */
+  notice: 'rgba(0,0,0,0.6)',
+  text: '#ffffff',
+} as const;
+
+/** Leaderboard tokens (Figma node 1:894). */
+export const LeaderboardColors = {
+  /** Card behind the list (node 1:572). */
+  panel: '#0f150b',
+  /** Card outline and row outlines -- same green as the progress bar's fill. */
+  border: SplashColors.fillEdge,
+  text: '#ffffff',
+} as const;
+
 /**
  * GFS Neohellenic is the app-wide typeface -- every piece of text uses it.
  * Loaded in `src/app/_layout.tsx`; render text through `AppText` rather than

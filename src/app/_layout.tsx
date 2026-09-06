@@ -40,8 +40,9 @@ export default function RootLayout() {
         {phase === 'loading' ? (
           <LoadingScreen onDone={handleLoadingDone} />
         ) : (
-          <Stack screenOptions={{ headerShown: false }}>
+          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#000000' } }}>
             <Stack.Screen name="index" />
+            <Stack.Screen name="leaderboard" />
           </Stack>
         )}
       </SafeAreaProvider>

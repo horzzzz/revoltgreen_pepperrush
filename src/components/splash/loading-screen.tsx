@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, useWindowDimensions, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
   runOnJS,
@@ -13,15 +13,13 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/ui/app-text';
-import { DesignFrame, SplashColors } from '@/constants/theme';
+import { SplashColors } from '@/constants/theme';
+import { useDesignScale } from '@/hooks/use-design-scale';
 
 const BG_ASSET = require('@/assets/images/splash/bg.jpg');
 const HI_ASSET = require('@/assets/images/splash/hi.png');
 
 const PROGRESS_MS = 2000;
-
-/** Layout is capped so the bar does not stretch across a tablet. */
-const MAX_LAYOUT_WIDTH = 520;
 
 /** Node 1:172 -- the "HI! LET'S MAKE TODAY LUCKY!" lockup. */
 const HI = { width: 289.649, height: 100.4, rotation: '-0.67deg' } as const;
@@ -38,7 +36,7 @@ type LoadingScreenProps = {
 
 /** Progress screen shown right after the native splash (Figma node 1:169). */
 export function LoadingScreen({ onDone }: LoadingScreenProps) {
-  const { width } = useWindowDimensions();
+  const scale = useDesignScale();
   const insets = useSafeAreaInsets();
   const progress = useSharedValue(0);
   const [percent, setPercent] = useState(0);
@@ -67,9 +65,6 @@ export function LoadingScreen({ onDone }: LoadingScreenProps) {
   );
 
   const fillStyle = useAnimatedStyle(() => ({ width: `${progress.value}%` }));
-
-  // Everything below is drawn at the Figma frame's scale (430pt wide).
-  const scale = Math.min(width, MAX_LAYOUT_WIDTH) / DesignFrame.width;
 
   return (
     <View style={styles.container}>
