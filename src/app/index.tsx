@@ -4,8 +4,8 @@ import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { LegalNote } from '@/components/menu/legal-note';
-import { PlayButton } from '@/components/menu/play-button';
 import { TopBar } from '@/components/menu/top-bar';
+import { GameButton } from '@/components/ui/game-button';
 import { MenuColors, SplashColors } from '@/constants/theme';
 import { useDesignScale } from '@/hooks/use-design-scale';
 
@@ -24,6 +24,8 @@ const SCRIM_HEIGHT = 425;
 /** Node 1:178 -- 64 from the frame bottom, of which 34 is the home indicator. */
 const STACK_BOTTOM_GAP = 30;
 const STACK_GAP = 36;
+/** Node 1:355 -- the Play plate. */
+const PLAY = { width: 382, height: 94, fontSize: 40 } as const;
 
 /** Main menu (Figma node 1:173). Every control is still a stub. */
 export default function MenuScreen() {
@@ -76,7 +78,7 @@ export default function MenuScreen() {
           styles.stack,
           { bottom: insets.bottom + STACK_BOTTOM_GAP * scale, gap: STACK_GAP * scale },
         ]}>
-        <PlayButton />
+        <GameButton label="Play" {...PLAY} />
         <LegalNote />
       </View>
 

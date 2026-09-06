@@ -43,6 +43,8 @@ export default function RootLayout() {
           <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#000000' } }}>
             <Stack.Screen name="index" />
             <Stack.Screen name="leaderboard" />
+            <Stack.Screen name="daily-bonus" />
+            <Stack.Screen name="wheel" />
             <Stack.Screen
               name="settings"
               options={{ presentation: 'transparentModal', animation: 'fade' }}

@@ -9,3 +9,6 @@ export const PLAYER = {
   /** Dollars the leaderboard ranks by. */
   balance: 12_500,
 } as const;
+
+/** Node I1:193;1:343 -- what the daily bonus hands out. */
+export const DAILY_BONUS_COINS = 1000;

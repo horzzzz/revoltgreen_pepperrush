@@ -28,9 +28,10 @@ export function TopBar({ balance = PLAYER.coins }: TopBarProps) {
   const scale = useDesignScale();
   const router = useRouter();
 
-  // The wheel and the gift are still stubs.
-  const handlers: Partial<Record<(typeof ACTIONS)[number]['key'], () => void>> = {
+  const handlers: Record<(typeof ACTIONS)[number]['key'], () => void> = {
     leaderboard: () => router.push('/leaderboard'),
+    wheel: () => router.push('/wheel'),
+    gift: () => router.push('/daily-bonus'),
     settings: () => router.push('/settings'),
   };
 
