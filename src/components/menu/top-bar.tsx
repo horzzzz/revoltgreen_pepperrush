@@ -28,9 +28,10 @@ export function TopBar({ balance = PLAYER.coins }: TopBarProps) {
   const scale = useDesignScale();
   const router = useRouter();
 
-  // Only the leaderboard has a screen so far; the rest stay stubs.
+  // The wheel and the gift are still stubs.
   const handlers: Partial<Record<(typeof ACTIONS)[number]['key'], () => void>> = {
     leaderboard: () => router.push('/leaderboard'),
+    settings: () => router.push('/settings'),
   };
 
   return (
