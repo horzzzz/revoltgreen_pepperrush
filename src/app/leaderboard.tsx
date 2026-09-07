@@ -7,6 +7,7 @@ import { LeaderboardPanel } from '@/components/leaderboard/leaderboard-panel';
 import { ScreenTopBar } from '@/components/ui/screen-top-bar';
 import { SplashColors } from '@/constants/theme';
 import { buildStandings } from '@/game/leaderboard';
+import { useCoins } from '@/game/player';
 import { useDesignScale } from '@/hooks/use-design-scale';
 
 // Same background as the menu. The leaderboard's own `bg` instance frames the
@@ -23,7 +24,9 @@ export default function LeaderboardScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
-  const { rows, you } = buildStandings();
+  // Ranked by the real coin balance, so the player's row and position move as
+  // they win and spend.
+  const { rows, you } = buildStandings(useCoins());
   const topBarHeight = insets.top + (5 + 36 + 12) * scale;
 
   return (

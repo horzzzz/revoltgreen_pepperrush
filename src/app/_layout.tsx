@@ -11,6 +11,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { LoadingScreen } from '@/components/splash/loading-screen';
+import { hydratePlayer } from '@/game/player';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -18,10 +19,17 @@ type Phase = 'loading' | 'app';
 
 export default function RootLayout() {
   const [phase, setPhase] = useState<Phase>('loading');
+  const [hydrated, setHydrated] = useState(false);
   const [fontsLoaded] = useFonts({
     GFSNeohellenic_400Regular,
     GFSNeohellenic_700Bold,
   });
+
+  // Restore the saved balance / free spins / cooldowns before anything reads
+  // the player store.
+  useEffect(() => {
+    hydratePlayer().finally(() => setHydrated(true));
+  }, []);
 
   // The native splash stays up until the font is ready, so the loading screen
   // never flashes in a fallback face first.
@@ -31,7 +39,7 @@ export default function RootLayout() {
 
   const handleLoadingDone = useCallback(() => setPhase('app'), []);
 
-  if (!fontsLoaded) return null;
+  if (!fontsLoaded || !hydrated) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

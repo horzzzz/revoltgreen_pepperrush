@@ -21,9 +21,13 @@ const CLAIM = { width: 334, height: 90, fontSize: 36 } as const;
 type DailyBonusCardProps = {
   amount: number;
   onClaim?: () => void;
+  /** Already claimed today -- the button is dimmed and shows the countdown. */
+  disabled?: boolean;
+  /** "HH:MM:SS" until the next claim, shown under the button while disabled. */
+  countdownLabel?: string;
 };
 
-export function DailyBonusCard({ amount, onClaim }: DailyBonusCardProps) {
+export function DailyBonusCard({ amount, onClaim, disabled = false, countdownLabel }: DailyBonusCardProps) {
   const scale = useDesignScale();
 
   return (
@@ -78,7 +82,18 @@ export function DailyBonusCard({ amount, onClaim }: DailyBonusCardProps) {
         </View>
       </View>
 
-      <GameButton label="Claim" {...CLAIM} onPress={onClaim} />
+      <View style={{ alignItems: 'center', gap: 8 * scale }}>
+        <GameButton
+          label="Claim"
+          {...CLAIM}
+          onPress={onClaim}
+          dimmed={disabled}
+          disabled={disabled}
+        />
+        {disabled && countdownLabel ? (
+          <AppText style={{ fontSize: 18 * scale }}>Next bonus in {countdownLabel}</AppText>
+        ) : null}
+      </View>
     </View>
   );
 }

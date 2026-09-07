@@ -24,8 +24,42 @@ export const SECTOR_ANGLE = 360 / WHEEL_SECTORS.length;
 export const SPIN_TURNS = 5;
 export const SPIN_MS = 4200;
 
-/** One spin a day. */
-export const SPIN_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+export { WHEEL_COOLDOWN_MS as SPIN_COOLDOWN_MS, formatCountdown } from '@/game/cooldown';
+
+export type WheelReward =
+  | { kind: 'coins'; coins: number }
+  | { kind: 'freeSpins'; count: number }
+  | { kind: 'nothing' };
+
+/**
+ * How often each sector comes up, aligned to `WHEEL_SECTORS`. The wheel is
+ * house-favoured: `FAIL` and the small cash prizes carry most of the weight,
+ * while the 5 000 / 10 000 jackpots and the free spins are deliberately rare.
+ * Total is 135, so 10 000 lands roughly once in 135 spins.
+ */
+const SECTOR_WEIGHTS = [
+  1, // MEGA WIN! 10 000
+  20, // 100
+  26, // FAIL
+  6, // 500
+  3, // 1 000
+  16, // 200
+  2, // 3 FREE SPINS
+  10, // 300
+  26, // FAIL
+  2, // 5 000
+  18, // 150
+  5, // 800
+] as const;
+
+/** What the sector at `index` pays out. Parsed from its label on the artwork. */
+export function sectorReward(index: number): WheelReward {
+  const label = WHEEL_SECTORS[index];
+  if (label === 'FAIL') return { kind: 'nothing' };
+  if (label === '3 FREE SPINS') return { kind: 'freeSpins', count: 3 };
+  const coins = parseInt(label.replace(/[^0-9]/g, ''), 10);
+  return Number.isFinite(coins) && coins > 0 ? { kind: 'coins', coins } : { kind: 'nothing' };
+}
 
 /**
  * Angle the disc has to reach for `index` to stop under the pointer, counted up
@@ -36,13 +70,13 @@ export function landingAngle(from: number, index: number) {
   return from - (from % 360) + SPIN_TURNS * 360 + settled;
 }
 
+/** A weighted draw over `SECTOR_WEIGHTS` -- see the note there. */
 export function pickSector() {
-  return Math.floor(Math.random() * WHEEL_SECTORS.length);
-}
-
-/** 3661000 -> "01:01:01" */
-export function formatCountdown(ms: number) {
-  const total = Math.max(0, Math.ceil(ms / 1000));
-  const pad = (n: number) => n.toString().padStart(2, '0');
-  return [Math.floor(total / 3600), Math.floor(total / 60) % 60, total % 60].map(pad).join(':');
+  const total = SECTOR_WEIGHTS.reduce((sum, weight) => sum + weight, 0);
+  let roll = Math.random() * total;
+  for (let index = 0; index < SECTOR_WEIGHTS.length; index += 1) {
+    roll -= SECTOR_WEIGHTS[index];
+    if (roll < 0) return index;
+  }
+  return SECTOR_WEIGHTS.length - 1;
 }

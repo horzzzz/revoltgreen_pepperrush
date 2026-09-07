@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Easing, runOnJS, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,13 +8,24 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GameButton } from '@/components/ui/game-button';
 import { ScreenTopBar } from '@/components/ui/screen-top-bar';
 import { WheelOfLuck } from '@/components/wheel/wheel-of-luck';
-import { SplashColors } from '@/constants/theme';
+import { WheelResultOverlay } from '@/components/wheel/wheel-result-overlay';
+import { GameColors, SplashColors } from '@/constants/theme';
+import {
+  addCoins,
+  addFreeSpins,
+  canSpinWheel,
+  consumeFreeSpin,
+  getFreeSpins,
+  markWheelSpin,
+  wheelAvailableAt,
+} from '@/game/player';
 import {
   formatCountdown,
   landingAngle,
   pickSector,
-  SPIN_COOLDOWN_MS,
   SPIN_MS,
+  sectorReward,
+  type WheelReward,
 } from '@/game/wheel';
 import { useDesignScale } from '@/hooks/use-design-scale';
 
@@ -29,7 +40,7 @@ const SPACE_BELOW = 99;
 /** Button sits 76 off the frame bottom, of which 34 is the home indicator. */
 const BOTTOM_GAP = 42;
 
-type Phase = 'idle' | 'spinning' | 'cooldown';
+type Phase = 'idle' | 'spinning';
 
 /** Wheel of Luck (Figma nodes 1:217 idle / 1:227 on cooldown). */
 export default function WheelScreen() {
@@ -39,36 +50,62 @@ export default function WheelScreen() {
 
   const angle = useSharedValue(0);
   const [phase, setPhase] = useState<Phase>('idle');
-  const [remaining, setRemaining] = useState(SPIN_COOLDOWN_MS);
+  const [result, setResult] = useState<WheelReward | null>(null);
 
-  const endsAt = useRef(0);
-
-  // The cooldown is in-memory only -- it resets when the screen unmounts, and
-  // will move into stored player state once the economy exists.
+  // The cooldown and the free-spin count both live in the player store; this
+  // screen reads them imperatively and re-renders on a 1s tick, so the button
+  // reflects them even mid-cooldown without leaning on store subscriptions.
+  const [, tick] = useReducer((n: number) => n + 1, 0);
   useEffect(() => {
-    if (phase !== 'cooldown') return;
-    const tick = () => setRemaining(endsAt.current - Date.now());
-    tick();
     const timer = setInterval(tick, 1000);
     return () => clearInterval(timer);
-  }, [phase]);
+  }, []);
+
+  const landedRef = useRef(0);
+
+  const freeSpins = getFreeSpins();
+  const hasFreeSpin = freeSpins > 0;
+  const onCooldown = !canSpinWheel();
+  // A free spin ignores the cooldown -- that is the whole point of it.
+  const blocked = onCooldown && !hasFreeSpin;
+  const remaining = wheelAvailableAt() - Date.now();
 
   const finishSpin = useCallback(() => {
-    endsAt.current = Date.now() + SPIN_COOLDOWN_MS;
-    setPhase('cooldown');
+    const reward = sectorReward(landedRef.current);
+    if (reward.kind === 'coins') addCoins(reward.coins);
+    else if (reward.kind === 'freeSpins') addFreeSpins(reward.count);
+    setResult(reward);
+    setPhase('idle');
+    tick();
   }, []);
 
   const spin = useCallback(() => {
     if (phase !== 'idle') return;
+    // Live guard -- reads the store at the moment of the tap, so a stale render
+    // cannot let a second spin through.
+    const free = getFreeSpins() > 0;
+    if (!free && !canSpinWheel()) return;
+
+    if (free) consumeFreeSpin();
+    else markWheelSpin();
+    tick();
+
     setPhase('spinning');
+    landedRef.current = pickSector();
     angle.value = withTiming(
-      landingAngle(angle.value, pickSector()),
+      landingAngle(angle.value, landedRef.current),
       { duration: SPIN_MS, easing: Easing.out(Easing.cubic) },
       (finished) => {
         if (finished) runOnJS(finishSpin)();
       },
     );
   }, [phase, angle, finishSpin]);
+
+  const label = hasFreeSpin
+    ? `Free spin (${freeSpins})`
+    : onCooldown
+      ? formatCountdown(remaining)
+      : 'Spin';
 
   const topBarHeight = insets.top + (5 + 36 + 12) * scale;
 
@@ -87,14 +124,20 @@ export default function WheelScreen() {
 
         <GameButton
           {...BUTTON}
-          label={phase === 'cooldown' ? formatCountdown(remaining) : 'Spin'}
+          label={label}
           onPress={spin}
-          dimmed={phase === 'cooldown'}
-          disabled={phase !== 'idle'}
+          dimmed={blocked}
+          disabled={phase !== 'idle' || blocked}
         />
       </View>
 
       <ScreenTopBar title="Wheel of Luck" onBack={() => router.back()} />
+
+      {result ? (
+        <View style={[StyleSheet.absoluteFill, styles.scrim]}>
+          <WheelResultOverlay reward={result} onContinue={() => setResult(null)} />
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -108,5 +151,10 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     alignItems: 'center',
+  },
+  scrim: {
+    backgroundColor: GameColors.scrim,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
