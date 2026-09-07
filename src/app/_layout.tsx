@@ -58,6 +58,7 @@ export default function RootLayout() {
               <Stack.Screen name="daily-bonus" />
               <Stack.Screen name="wheel" />
               <Stack.Screen name="shop" />
+              <Stack.Screen name="exchange" />
               <Stack.Screen
                 name="settings"
                 options={{ presentation: 'transparentModal', animation: 'fade' }}

@@ -26,6 +26,16 @@ export const STARTING_COINS = 100;
 /** Node I1:193;1:343 -- what the daily bonus hands out. */
 export const DAILY_BONUS_COINS = 1000;
 
+/**
+ * Exchange screen (Figma node 1:898). Every full 10,000 coins rolls over into
+ * the dollar balance at $5 a batch the moment they land -- there is no button
+ * for it. The Exchange button itself only unlocks once the dollar balance
+ * reaches $100.
+ */
+export const COINS_PER_EXCHANGE = 10_000;
+export const USD_PER_EXCHANGE = 5;
+export const EXCHANGE_MIN_USD = 100;
+
 const STORAGE_KEY = 'player.v2';
 
 /**
@@ -36,6 +46,8 @@ const MAX_FREE_SPINS = 3;
 
 type PlayerState = {
   coins: number;
+  /** Dollars won by converting coins -- the Exchange screen's BALANCE field. */
+  usd: number;
   freeSpins: number;
   /** `Date.now()` of the last daily bonus claim, `0` if never. */
   lastDailyClaimAt: number;
@@ -45,6 +57,7 @@ type PlayerState = {
 
 const state: PlayerState = {
   coins: STARTING_COINS,
+  usd: 0,
   freeSpins: 0,
   lastDailyClaimAt: 0,
   lastWheelSpinAt: 0,
@@ -93,10 +106,12 @@ export async function hydratePlayer() {
     if (!raw) return;
     const saved = JSON.parse(raw) as Partial<PlayerState>;
     if (isFiniteNumber(saved.coins)) state.coins = toCents(Math.max(0, saved.coins));
+    if (isFiniteNumber(saved.usd)) state.usd = toCents(Math.max(0, saved.usd));
     if (isFiniteNumber(saved.freeSpins))
       state.freeSpins = Math.min(MAX_FREE_SPINS, Math.max(0, Math.floor(saved.freeSpins)));
     if (isFiniteNumber(saved.lastDailyClaimAt)) state.lastDailyClaimAt = saved.lastDailyClaimAt;
     if (isFiniteNumber(saved.lastWheelSpinAt)) state.lastWheelSpinAt = saved.lastWheelSpinAt;
+    settleExchange();
     emit();
   } catch {
     // Corrupt record -- keep the defaults.
@@ -109,9 +124,31 @@ export function getCoins() {
   return state.coins;
 }
 
+export function getUsd() {
+  return state.usd;
+}
+
+/**
+ * Rolls every whole 10,000 coins over into the dollar balance at $5 a batch.
+ * Called after any credit to the coin balance, so the Exchange screen's coin
+ * progress bar tops out and resets on its own.
+ */
+function settleExchange() {
+  if (state.coins < COINS_PER_EXCHANGE) return;
+  const batches = Math.floor(state.coins / COINS_PER_EXCHANGE);
+  state.coins = toCents(state.coins - batches * COINS_PER_EXCHANGE);
+  state.usd = toCents(state.usd + batches * USD_PER_EXCHANGE);
+}
+
+/** Whether the dollar balance has reached the Exchange button's unlock floor. */
+export function canExchange() {
+  return state.usd >= EXCHANGE_MIN_USD;
+}
+
 export function addCoins(amount: number) {
   if (amount <= 0) return;
   state.coins = toCents(state.coins + amount);
+  settleExchange();
   emit();
   persist();
 }
@@ -127,6 +164,10 @@ export function spendCoins(amount: number) {
 
 export function useCoins() {
   return useSyncExternalStore(subscribe, getCoins, getCoins);
+}
+
+export function useUsd() {
+  return useSyncExternalStore(subscribe, getUsd, getUsd);
 }
 
 // --- free spins --------------------------------------------------------------
@@ -162,6 +203,7 @@ export function claimDailyBonus() {
   if (!canClaimDaily()) return false;
   state.lastDailyClaimAt = Date.now();
   state.coins = toCents(state.coins + DAILY_BONUS_COINS);
+  settleExchange();
   emit();
   persist();
   return true;

@@ -173,7 +173,7 @@ export default function GameScreen() {
         <PauseMenu
           onResume={() => setPaused(false)}
           onRestart={restart}
-          onExchange={() => {}}
+          onExchange={() => router.push('/exchange')}
           onSettings={() => router.push('/settings')}
           onMainMenu={() => router.back()}
         />
