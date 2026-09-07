@@ -11,7 +11,9 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { LoadingScreen } from '@/components/splash/loading-screen';
+import { BillingProvider } from '@/game/billing';
 import { hydratePlayer } from '@/game/player';
+import { hydratePurchases } from '@/game/purchases';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -28,7 +30,7 @@ export default function RootLayout() {
   // Restore the saved balance / free spins / cooldowns before anything reads
   // the player store.
   useEffect(() => {
-    hydratePlayer().finally(() => setHydrated(true));
+    Promise.all([hydratePlayer(), hydratePurchases()]).finally(() => setHydrated(true));
   }, []);
 
   // The native splash stays up until the font is ready, so the loading screen
@@ -44,23 +46,25 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <StatusBar style="light" />
-        {phase === 'loading' ? (
-          <LoadingScreen onDone={handleLoadingDone} />
-        ) : (
-          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#000000' } }}>
-            <Stack.Screen name="index" />
-            <Stack.Screen name="game" />
-            <Stack.Screen name="leaderboard" />
-            <Stack.Screen name="daily-bonus" />
-            <Stack.Screen name="wheel" />
-            <Stack.Screen name="shop" />
-            <Stack.Screen
-              name="settings"
-              options={{ presentation: 'transparentModal', animation: 'fade' }}
-            />
-          </Stack>
-        )}
+        <BillingProvider>
+          <StatusBar style="light" />
+          {phase === 'loading' ? (
+            <LoadingScreen onDone={handleLoadingDone} />
+          ) : (
+            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#000000' } }}>
+              <Stack.Screen name="index" />
+              <Stack.Screen name="game" />
+              <Stack.Screen name="leaderboard" />
+              <Stack.Screen name="daily-bonus" />
+              <Stack.Screen name="wheel" />
+              <Stack.Screen name="shop" />
+              <Stack.Screen
+                name="settings"
+                options={{ presentation: 'transparentModal', animation: 'fade' }}
+              />
+            </Stack>
+          )}
+        </BillingProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

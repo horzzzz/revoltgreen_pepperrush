@@ -48,7 +48,8 @@
             ]
           }
         }
-      ]
+      ],
+      "expo-iap"
     ],
     "experiments": {
       "typedRoutes": true,

@@ -1,11 +1,13 @@
 import { StyleSheet, View } from 'react-native';
 
+import { AppText } from '@/components/ui/app-text';
 import { FreeCoinsBanner } from '@/components/shop/free-coins-banner';
 import { PackTile } from '@/components/shop/pack-tile';
 import { VipPackCard } from '@/components/shop/vip-pack-card';
 import { GameColors } from '@/constants/theme';
+import { useBilling } from '@/game/billing';
 import { addCoins } from '@/game/player';
-import { FREE_COINS, PACKS, type Pack } from '@/game/shop';
+import { FREE_COINS, PACKS } from '@/game/shop';
 import { useDesignScale } from '@/hooks/use-design-scale';
 
 const STARTER_ICON = require('@/assets/images/shop/icon-starter.png');
@@ -18,18 +20,10 @@ const ROW_GAP = 12;
 
 const [starter, premium, vip] = PACKS;
 
-/**
- * There is no payment backend behind this app -- "buying" a pack just grants
- * its coins locally, the same stub the daily bonus and the wheel use for
- * their own rewards.
- */
-function grant(pack: Pack) {
-  addCoins(pack.coins);
-}
-
 /** The shop card (Figma node 1:922). */
 export function ShopPanel() {
   const scale = useDesignScale();
+  const { connected, priceFor, pendingSku, buy, error } = useBilling();
 
   return (
     <View
@@ -46,11 +40,37 @@ export function ShopPanel() {
         <FreeCoinsBanner amount={FREE_COINS} onClaim={() => addCoins(FREE_COINS)} />
 
         <View style={[styles.pair, { gap: ROW_GAP * scale }]}>
-          <PackTile pack={starter} icon={STARTER_ICON} onBuy={grant} />
-          <PackTile pack={premium} icon={PREMIUM_ICON} onBuy={grant} />
+          <PackTile
+            pack={starter}
+            icon={STARTER_ICON}
+            priceLabel={priceFor(starter) ?? starter.fallbackPrice}
+            busy={pendingSku === starter.productId}
+            disabled={!connected || (pendingSku !== null && pendingSku !== starter.productId)}
+            onBuy={buy}
+          />
+          <PackTile
+            pack={premium}
+            icon={PREMIUM_ICON}
+            priceLabel={priceFor(premium) ?? premium.fallbackPrice}
+            busy={pendingSku === premium.productId}
+            disabled={!connected || (pendingSku !== null && pendingSku !== premium.productId)}
+            onBuy={buy}
+          />
         </View>
 
-        <VipPackCard pack={vip} onBuy={grant} />
+        <VipPackCard
+          pack={vip}
+          priceLabel={priceFor(vip) ?? vip.fallbackPrice}
+          busy={pendingSku === vip.productId}
+          disabled={!connected || (pendingSku !== null && pendingSku !== vip.productId)}
+          onBuy={buy}
+        />
+
+        {error ? (
+          <AppText style={styles.error}>{error}</AppText>
+        ) : !connected ? (
+          <AppText style={styles.notice}>Connecting to the store…</AppText>
+        ) : null}
       </View>
     </View>
   );
@@ -69,5 +89,15 @@ const styles = StyleSheet.create({
   },
   pair: {
     flexDirection: 'row',
+  },
+  notice: {
+    fontSize: 12,
+    opacity: 0.6,
+    textAlign: 'center',
+  },
+  error: {
+    fontSize: 12,
+    color: '#ff6b6b',
+    textAlign: 'center',
   },
 });

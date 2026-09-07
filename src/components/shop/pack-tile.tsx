@@ -15,11 +15,17 @@ const BUTTON = { width: 144, height: 58, fontSize: 14 } as const;
 type PackTileProps = {
   pack: Pack;
   icon: ImageSourcePropType;
+  /** The store's localized price, or the pack's placeholder while it loads. */
+  priceLabel: string;
+  /** This pack's purchase is in flight. */
+  busy?: boolean;
+  /** Store unavailable, or another pack's purchase is in flight. */
+  disabled?: boolean;
   onBuy: (pack: Pack) => void;
 };
 
 /** One of the two side-by-side packs (Figma node 1:667). */
-export function PackTile({ pack, icon, onBuy }: PackTileProps) {
+export function PackTile({ pack, icon, priceLabel, busy, disabled, onBuy }: PackTileProps) {
   const scale = useDesignScale();
 
   return (
@@ -49,7 +55,13 @@ export function PackTile({ pack, icon, onBuy }: PackTileProps) {
         </View>
       </View>
 
-      <GameButton {...BUTTON} label={pack.price} onPress={() => onBuy(pack)} />
+      <GameButton
+        {...BUTTON}
+        label={busy ? '…' : priceLabel}
+        dimmed={disabled}
+        disabled={disabled}
+        onPress={() => onBuy(pack)}
+      />
     </View>
   );
 }

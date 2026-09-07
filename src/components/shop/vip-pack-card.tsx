@@ -16,11 +16,17 @@ const BUTTON = { width: 318, height: 108, fontSize: 24 } as const;
 
 type VipPackCardProps = {
   pack: Pack;
+  /** The store's localized price, or the pack's placeholder while it loads. */
+  priceLabel: string;
+  /** This pack's purchase is in flight. */
+  busy?: boolean;
+  /** Store unavailable, or another pack's purchase is in flight. */
+  disabled?: boolean;
   onBuy: (pack: Pack) => void;
 };
 
 /** The VIP pack (Figma node 1:674) -- the one row that spans the full card. */
-export function VipPackCard({ pack, onBuy }: VipPackCardProps) {
+export function VipPackCard({ pack, priceLabel, busy, disabled, onBuy }: VipPackCardProps) {
   const scale = useDesignScale();
 
   return (
@@ -48,7 +54,13 @@ export function VipPackCard({ pack, onBuy }: VipPackCardProps) {
         </View>
       </View>
 
-      <GameButton {...BUTTON} label={pack.price} onPress={() => onBuy(pack)} />
+      <GameButton
+        {...BUTTON}
+        label={busy ? '…' : priceLabel}
+        dimmed={disabled}
+        disabled={disabled}
+        onPress={() => onBuy(pack)}
+      />
     </View>
   );
 }

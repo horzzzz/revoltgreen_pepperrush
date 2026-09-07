@@ -43,7 +43,9 @@ src/
   game/slot/                    # математика слота: символы, ленты, линии, выплаты
   game/leaderboard.ts           # соперники и расчёт места по балансу
   game/wheel.ts                 # сектора колеса, углы остановки, кулдаун
-  game/shop.ts                  # паки магазина и суммы монет
+  game/shop.ts                  # паки магазина, суммы монет и их product id
+  game/billing.tsx              # коннект к StoreKit/Play Billing через expo-iap (billing.web.tsx — веб-заглушка)
+  game/purchases.ts             # идемпотентное начисление монет по завершённой покупке
   hooks/use-design-scale.ts     # перевод размеров из Figma (кадр 430pt) в points
   hooks/use-slot-machine.ts     # цикл спина: ставка → барабаны → линии → выплата
 ```
@@ -53,6 +55,21 @@ src/
 настройки (модалка поверх меню), колесо — Wheel of Luck, Play — сам слот. Плюс рядом с
 балансом (как и тап по самому балансу) открывает магазин. Переключатели в настройках
 живут в локальном стейте: сохранения ещё нет.
+
+## Покупки
+
+Три пака монет в магазине (`src/game/shop.ts`) продаются как настоящие consumable-покупки через
+[`expo-iap`](https://openiap.dev/docs/setup/expo) — StoreKit 2 на iOS, Play Billing на Android.
+Валидация чека — локальная (нет бэкенда): монеты начисляются, как только стор подтвердил покупку,
+`grantOnce()` (`src/game/purchases.ts`) не даёт одной и той же транзакции начислиться дважды.
+
+SKU, которые нужно завести в App Store Connect и Google Play Console (тип — Consumable):
+
+- `revoltgreen_pepperrush_1500` — Starter Pack
+- `revoltgreen_pepperrush_4500` — Premium Pack
+- `revoltgreen_pepperrush_10000` — VIP Pack
+
+Работает только в dev build (`npm run ios` / `npm run android`), не в Expo Go.
 
 ## Слот
 
