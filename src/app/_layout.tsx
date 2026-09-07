@@ -59,6 +59,7 @@ export default function RootLayout() {
               <Stack.Screen name="wheel" />
               <Stack.Screen name="shop" />
               <Stack.Screen name="exchange" />
+              <Stack.Screen name="add-payout-method" />
               <Stack.Screen
                 name="settings"
                 options={{ presentation: 'transparentModal', animation: 'fade' }}

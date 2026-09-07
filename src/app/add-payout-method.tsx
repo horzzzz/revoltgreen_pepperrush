@@ -1,9 +1,9 @@
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ExchangePanel } from '@/components/exchange/exchange-panel';
+import { PayoutMethodsPanel } from '@/components/exchange/payout-methods-panel';
 import { ScreenTopBar } from '@/components/ui/screen-top-bar';
 import { SplashColors } from '@/constants/theme';
 import { useDesignScale } from '@/hooks/use-design-scale';
@@ -11,13 +11,13 @@ import { useDesignScale } from '@/hooks/use-design-scale';
 // Reused from the menu so the backdrop does not jump on the way in.
 const BG_ASSET = require('@/assets/images/menu/bg.jpg');
 
-/** Node 1:901 -- card sits 24 under the bar, hugs a 24pt side margin. */
+/** Node 1:906 -- card sits 24 under the bar, hugs a 24pt side margin. */
 const PANEL_TOP = 24;
 const PANEL_MARGIN = 24;
 const PANEL_BOTTOM = 24;
 
-/** Exchange / payout (Figma node 1:898). */
-export default function ExchangeScreen() {
+/** Add payout method (Figma node 1:902). Connecting a method is wired later. */
+export default function AddPayoutMethodScreen() {
   const scale = useDesignScale();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -28,22 +28,20 @@ export default function ExchangeScreen() {
     <View style={styles.container}>
       <Image source={BG_ASSET} style={StyleSheet.absoluteFill} contentFit="cover" />
 
-      <View
-        style={[
-          styles.panelSlot,
+      <ScrollView
+        style={[styles.scroll, { top: topBarHeight + PANEL_TOP * scale }]}
+        contentContainerStyle={[
+          styles.scrollContent,
           {
-            top: topBarHeight + PANEL_TOP * scale,
-            bottom: insets.bottom + PANEL_BOTTOM * scale,
             paddingHorizontal: PANEL_MARGIN * scale,
+            paddingBottom: insets.bottom + PANEL_BOTTOM * scale,
           },
-        ]}>
-        <ExchangePanel
-          onPlay={() => router.push('/game')}
-          onAddPayout={() => router.push('/add-payout-method')}
-        />
-      </View>
+        ]}
+        showsVerticalScrollIndicator={false}>
+        <PayoutMethodsPanel onConnect={() => {}} />
+      </ScrollView>
 
-      <ScreenTopBar title="Exchange" onBack={() => router.back()} />
+      <ScreenTopBar title="Add payout method" onBack={() => router.back()} />
     </View>
   );
 }
@@ -54,10 +52,13 @@ const styles = StyleSheet.create({
     backgroundColor: SplashColors.bg,
     overflow: 'hidden',
   },
-  panelSlot: {
+  scroll: {
     position: 'absolute',
     left: 0,
     right: 0,
+    bottom: 0,
+  },
+  scrollContent: {
     alignItems: 'center',
   },
 });
