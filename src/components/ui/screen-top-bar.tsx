@@ -22,7 +22,11 @@ export function ScreenTopBar({ title, onBack }: ScreenTopBarProps) {
   return (
     <TopBarShell>
       <View style={[styles.row, { height: ICON_SIZE * scale }]}>
-        <PressableScale onPress={onBack} accessibilityRole="button" accessibilityLabel="Back">
+        <PressableScale
+          onPress={onBack}
+          sfx="ui-back"
+          accessibilityRole="button"
+          accessibilityLabel="Back">
           <Image
             source={BACK_ASSET}
             style={{ width: ICON_SIZE * scale, height: ICON_SIZE * scale }}

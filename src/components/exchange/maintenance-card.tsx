@@ -47,6 +47,7 @@ export function MaintenanceCard({ onClose, onRetry }: MaintenanceCardProps) {
           </AppText>
           <PressableScale
             onPress={onClose}
+            sfx="ui-back"
             hitSlop={12}
             accessibilityRole="button"
             accessibilityLabel="Close">

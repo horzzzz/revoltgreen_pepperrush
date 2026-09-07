@@ -6,6 +6,7 @@ import { StyleSheet, View } from 'react-native';
 import { DailyBonusCard } from '@/components/daily/daily-bonus-card';
 import { ScreenTopBar } from '@/components/ui/screen-top-bar';
 import { SplashColors } from '@/constants/theme';
+import { playSfx } from '@/game/audio/engine';
 import { formatCountdown } from '@/game/cooldown';
 import { claimDailyBonus, DAILY_BONUS_COINS, useDailyStatus } from '@/game/player';
 
@@ -29,6 +30,7 @@ export default function DailyBonusScreen() {
 
   const claim = () => {
     claimDailyBonus();
+    playSfx('reward-claim');
     router.back();
   };
 

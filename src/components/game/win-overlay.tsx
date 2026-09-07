@@ -61,7 +61,7 @@ export function WinOverlay({ amount, onContinue, onMenu }: WinOverlayProps) {
 
       <View style={{ gap: 12 * scale, alignItems: 'center' }}>
         <GameButton {...CONTINUE} label="Continue" onPress={onContinue} />
-        <GameButton {...MENU} label="Menu" onPress={onMenu} />
+        <GameButton {...MENU} label="Menu" onPress={onMenu} sfx="ui-back" />
       </View>
     </View>
   );

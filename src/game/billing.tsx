@@ -13,6 +13,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ErrorCode, useIAP, type Product, type Purchase } from 'expo-iap';
 
+import { playSfx } from '@/game/audio/engine';
 import { grantOnce } from '@/game/purchases';
 import { PACK_SKUS, type Pack } from '@/game/shop';
 
@@ -46,6 +47,7 @@ export function BillingProvider({ children }: { children: ReactNode }) {
     onPurchaseError: (purchaseError) => {
       setPendingSku(null);
       if (purchaseError.code === ErrorCode.UserCancelled) return;
+      playSfx('ui-denied');
       setError(purchaseError.message);
     },
   });
@@ -57,6 +59,7 @@ export function BillingProvider({ children }: { children: ReactNode }) {
       if (purchase.purchaseState === 'purchased') {
         await grantOnce(purchase);
         await finishTransaction({ purchase, isConsumable: true });
+        playSfx('purchase');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));

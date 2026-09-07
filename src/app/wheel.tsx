@@ -10,6 +10,7 @@ import { ScreenTopBar } from '@/components/ui/screen-top-bar';
 import { WheelOfLuck } from '@/components/wheel/wheel-of-luck';
 import { WheelResultOverlay } from '@/components/wheel/wheel-result-overlay';
 import { GameColors, SplashColors } from '@/constants/theme';
+import { playSfx, startSpinSound, stopSpinSound } from '@/game/audio/engine';
 import {
   addCoins,
   addFreeSpins,
@@ -63,6 +64,8 @@ export default function WheelScreen() {
 
   const landedRef = useRef(0);
 
+  useEffect(() => stopSpinSound, []);
+
   const freeSpins = getFreeSpins();
   const hasFreeSpin = freeSpins > 0;
   const onCooldown = !canSpinWheel();
@@ -71,9 +74,17 @@ export default function WheelScreen() {
   const remaining = wheelAvailableAt() - Date.now();
 
   const finishSpin = useCallback(() => {
+    stopSpinSound();
     const reward = sectorReward(landedRef.current);
-    if (reward.kind === 'coins') addCoins(reward.coins);
-    else if (reward.kind === 'freeSpins') addFreeSpins(reward.count);
+    if (reward.kind === 'coins') {
+      addCoins(reward.coins);
+      playSfx('reward-claim');
+    } else if (reward.kind === 'freeSpins') {
+      addFreeSpins(reward.count);
+      playSfx('reward-claim');
+    } else {
+      playSfx('wheel-fail');
+    }
     setResult(reward);
     setPhase('idle');
     tick();
@@ -91,6 +102,7 @@ export default function WheelScreen() {
     tick();
 
     setPhase('spinning');
+    startSpinSound();
     landedRef.current = pickSector();
     angle.value = withTiming(
       landingAngle(angle.value, landedRef.current),

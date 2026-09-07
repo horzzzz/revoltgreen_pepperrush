@@ -70,7 +70,7 @@ export function SettingsCard({
         <AppText weight="bold" style={[styles.title, { fontSize: 30 * scale }]}>
           Settings
         </AppText>
-        <PressableScale onPress={onClose} accessibilityRole="button" accessibilityLabel="Close">
+        <PressableScale onPress={onClose} sfx="ui-back" accessibilityRole="button" accessibilityLabel="Close">
           <Image
             source={CLOSE_ASSET}
             style={{ width: CLOSE_SIZE * scale, height: CLOSE_SIZE * scale }}

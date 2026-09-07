@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { MaintenanceCard } from '@/components/exchange/maintenance-card';
+import { playSfx } from '@/game/audio/engine';
 
 /** Same blurred green scrim as the pause menu and settings sheet. */
 const SCRIM = ['rgba(8,40,8,0.8)', 'rgba(6,38,3,0.8)'] as const;
@@ -15,11 +16,17 @@ const SCRIM = ['rgba(8,40,8,0.8)', 'rgba(6,38,3,0.8)'] as const;
  */
 export default function MaintenanceScreen() {
   const router = useRouter();
+  // The card's own Close button already sounds through its PressableScale
+  // (sfx="ui-back") -- this handler is only for the backdrop.
   const close = () => router.back();
+  const closeFromBackdrop = () => {
+    playSfx('ui-back');
+    close();
+  };
 
   return (
     <View style={styles.container}>
-      <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityLabel="Close">
+      <Pressable style={StyleSheet.absoluteFill} onPress={closeFromBackdrop} accessibilityLabel="Close">
         <BlurView
           intensity={30}
           tint="dark"

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { SPIN_MS, SPIN_TOTAL_MS } from '@/components/game/board-layout';
+import { DROP_MS, REEL_STAGGER_MS, SPIN_MS, SPIN_TOTAL_MS } from '@/components/game/board-layout';
+import { playSfx, startSpinSound, stopSpinSound } from '@/game/audio/engine';
 import { addCoins, spendCoins, useCoins } from '@/game/player';
 import { type AutospinCount, DEFAULT_AUTOSPIN, DEFAULT_BET } from '@/game/slot/bet';
 import { evaluate, type WinLine } from '@/game/slot/evaluate';
@@ -68,6 +69,7 @@ export function useSlotMachine() {
 
   function resolve(outcome: SpinResult) {
     const payout = evaluate(outcome.board, betRef.current);
+    stopSpinSound();
 
     if (payout.total > 0) {
       addCoins(payout.total);
@@ -75,20 +77,30 @@ export function useSlotMachine() {
       setLines(payout.lines);
       setWinning(maskOf(payout.lines));
     }
+    if (outcome.tokens.length > 0) playSfx('pot-token');
     setPots((current) => collectTokens(current, outcome.tokens));
     setPhase('idle');
     busyRef.current = false;
 
     if (payout.total >= betRef.current * BIG_WIN_X) {
       stopAutospin();
+      playSfx('big-win');
       setOverlay({ kind: 'bigWin', amount: payout.total });
       return;
     }
     // A plain win screen would interrupt an autospin run, so it only shows up
     // when the player is spinning by hand.
     if (payout.total >= betRef.current * WIN_OVERLAY_X && autospinLeftRef.current === 0) {
+      playSfx('good-job');
       setOverlay({ kind: 'win', amount: payout.total });
       return;
+    }
+    if (payout.total > 0) {
+      playSfx('win');
+    } else if (autospinLeftRef.current === 0) {
+      // Muted during autospin -- it would otherwise repeat every
+      // AUTOSPIN_GAP_MS and turn into noise on a run of empty spins.
+      playSfx('lose');
     }
     if (autospinLeftRef.current > 0) later(spin, AUTOSPIN_GAP_MS);
   }
@@ -109,6 +121,14 @@ export function useSlotMachine() {
     setLines([]);
     setWinning(NO_WINS);
     setPhase('spinning');
+    startSpinSound();
+
+    // A tick per reel as it lands, staggered the same way the board itself
+    // settles (board-layout.ts) -- DROP_MS in so it lines up with the drop-in
+    // animation revealing the result, not with the blur strip still spinning.
+    for (let reel = 0; reel < REEL_COUNT; reel++) {
+      later(() => playSfx('reel-stop'), SPIN_MS + reel * REEL_STAGGER_MS + DROP_MS);
+    }
 
     // The new cells only go on the board once the blur strip is up, so no frame
     // can give the result away; from there each reel lands on its own beat.

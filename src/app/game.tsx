@@ -16,6 +16,7 @@ import { StatPlate } from '@/components/game/stat-plate';
 import { WinOverlay } from '@/components/game/win-overlay';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { GameColors, SplashColors } from '@/constants/theme';
+import { playSfx } from '@/game/audio/engine';
 import { formatMoney } from '@/game/slot/bet';
 import { useCountUp } from '@/hooks/use-count-up';
 import { useDesignScale } from '@/hooks/use-design-scale';
@@ -136,7 +137,13 @@ export default function GameScreen() {
       {betPanelOpen ? (
         <Pressable
           style={[StyleSheet.absoluteFill, styles.scrim]}
-          onPress={() => closeBetPanel(machine.bet)}>
+          onPress={() => {
+            // The panel's own Close icon already sounds through its
+            // PressableScale (sfx="ui-back") -- tapping the backdrop is a
+            // plain Pressable and needs its own.
+            playSfx('ui-back');
+            closeBetPanel(machine.bet);
+          }}>
           <Pressable onPress={() => {}}>
             <BetPanel
               bet={machine.bet}

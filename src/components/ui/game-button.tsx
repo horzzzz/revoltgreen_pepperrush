@@ -4,6 +4,7 @@ import { StyleSheet } from 'react-native';
 import { AppText } from '@/components/ui/app-text';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { useDesignScale } from '@/hooks/use-design-scale';
+import type { SfxId } from '@/game/audio/sfx';
 
 const BUTTON_ASSET = require('@/assets/images/ui/button.png');
 
@@ -17,6 +18,8 @@ type GameButtonProps = {
   /** Node 1:358 -- the plate at half opacity while the action is unavailable. */
   dimmed?: boolean;
   disabled?: boolean;
+  /** Forwarded to `PressableScale` -- override for a Back/Close-flavoured plate (e.g. "Main Menu"). */
+  sfx?: SfxId;
 };
 
 /**
@@ -32,6 +35,7 @@ export function GameButton({
   onPress,
   dimmed = false,
   disabled = false,
+  sfx,
 }: GameButtonProps) {
   const scale = useDesignScale();
 
@@ -39,6 +43,7 @@ export function GameButton({
     <PressableScale
       onPress={onPress}
       disabled={disabled}
+      sfx={sfx}
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled }}

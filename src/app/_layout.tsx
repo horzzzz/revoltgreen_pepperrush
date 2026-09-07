@@ -11,6 +11,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { LoadingScreen } from '@/components/splash/loading-screen';
+import { initAudio, startMusic } from '@/game/audio/engine';
+import { hydrateAudioSettings } from '@/game/audio/settings';
 import { BillingProvider } from '@/game/billing';
 import { hydratePayout } from '@/game/payout';
 import { hydratePlayer } from '@/game/player';
@@ -29,11 +31,17 @@ export default function RootLayout() {
   });
 
   // Restore the saved balance / free spins / cooldowns before anything reads
-  // the player store.
+  // the player store. The audio engine decodes its clips in parallel --
+  // `initAudio()` is a no-op-until-ready singleton, so nothing here blocks on
+  // it landing before the app's first frame.
   useEffect(() => {
-    Promise.all([hydratePlayer(), hydratePurchases(), hydratePayout()]).finally(() =>
-      setHydrated(true),
-    );
+    void initAudio();
+    Promise.all([
+      hydratePlayer(),
+      hydratePurchases(),
+      hydratePayout(),
+      hydrateAudioSettings(),
+    ]).finally(() => setHydrated(true));
   }, []);
 
   // The native splash stays up until the font is ready, so the loading screen
@@ -42,7 +50,13 @@ export default function RootLayout() {
     if (fontsLoaded) SplashScreen.hideAsync().catch(() => {});
   }, [fontsLoaded]);
 
-  const handleLoadingDone = useCallback(() => setPhase('app'), []);
+  // The theme is one loop for the whole app -- menu and game alike -- so it
+  // starts here, once, rather than per-screen, right as the loading screen
+  // hands off to the app.
+  const handleLoadingDone = useCallback(() => {
+    startMusic();
+    setPhase('app');
+  }, []);
 
   if (!fontsLoaded || !hydrated) return null;
 

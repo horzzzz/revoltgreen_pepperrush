@@ -65,6 +65,7 @@ export function BetPanel({ bet, autospin, balance, onDismiss, onStart }: BetPane
         </AppText>
         <PressableScale
           onPress={() => onDismiss(chosenBet)}
+          sfx="ui-back"
           accessibilityRole="button"
           accessibilityLabel="Close">
           <Image

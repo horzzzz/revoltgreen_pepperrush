@@ -12,6 +12,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useSyncExternalStore } from 'react';
 
+import { playSfx } from '@/game/audio/engine';
 import { DAILY_COOLDOWN_MS, WHEEL_COOLDOWN_MS } from '@/game/cooldown';
 
 export const PLAYER = {
@@ -111,7 +112,7 @@ export async function hydratePlayer() {
       state.freeSpins = Math.min(MAX_FREE_SPINS, Math.max(0, Math.floor(saved.freeSpins)));
     if (isFiniteNumber(saved.lastDailyClaimAt)) state.lastDailyClaimAt = saved.lastDailyClaimAt;
     if (isFiniteNumber(saved.lastWheelSpinAt)) state.lastWheelSpinAt = saved.lastWheelSpinAt;
-    settleExchange();
+    settleExchange({ silent: true });
     emit();
   } catch {
     // Corrupt record -- keep the defaults.
@@ -132,12 +133,18 @@ export function getUsd() {
  * Rolls every whole 10,000 coins over into the dollar balance at $5 a batch.
  * Called after any credit to the coin balance, so the Exchange screen's coin
  * progress bar tops out and resets on its own.
+ *
+ * `silent` is set from `hydratePlayer()`, which re-runs this against whatever
+ * was saved last session purely to correct old state -- nothing actually
+ * happened just now, so it shouldn't cue a reward sound before the app has
+ * even finished loading.
  */
-function settleExchange() {
+function settleExchange(options?: { silent?: boolean }) {
   if (state.coins < COINS_PER_EXCHANGE) return;
   const batches = Math.floor(state.coins / COINS_PER_EXCHANGE);
   state.coins = toCents(state.coins - batches * COINS_PER_EXCHANGE);
   state.usd = toCents(state.usd + batches * USD_PER_EXCHANGE);
+  if (!options?.silent) playSfx('reward-claim');
 }
 
 /** Whether the dollar balance has reached the Exchange button's unlock floor. */

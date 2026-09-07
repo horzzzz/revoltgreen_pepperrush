@@ -41,6 +41,7 @@ export function Toggle({ value, onValueChange, accessibilityLabel }: ToggleProps
   return (
     <PressableScale
       onPress={() => onValueChange(!value)}
+      sfx="ui-toggle"
       accessibilityRole="switch"
       accessibilityState={{ checked: value }}
       accessibilityLabel={accessibilityLabel}

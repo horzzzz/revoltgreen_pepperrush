@@ -46,6 +46,7 @@ export function PayoutConnectCard({ method, initialValues, onClose, onSave }: Pa
         ]}>
         <PressableScale
           onPress={onClose}
+          sfx="ui-back"
           accessibilityRole="button"
           accessibilityLabel="Close"
           hitSlop={12}

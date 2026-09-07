@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, View } from 'react-native';
 
 import { PayoutConnectCard } from '@/components/exchange/payout-connect-card';
+import { playSfx } from '@/game/audio/engine';
 import { connectPayout, usePayout } from '@/game/payout';
 import { payoutMethodInfo } from '@/game/payout-methods';
 
@@ -17,7 +18,13 @@ export default function ConnectPayoutScreen() {
   const connection = usePayout();
   const method = methodKey ? payoutMethodInfo(methodKey) : undefined;
 
+  // The card's own Close button already sounds through its PressableScale
+  // (sfx="ui-back") -- this handler is only for the backdrop.
   const close = () => router.back();
+  const closeFromBackdrop = () => {
+    playSfx('ui-back');
+    close();
+  };
 
   if (!method) {
     close();
@@ -28,6 +35,7 @@ export default function ConnectPayoutScreen() {
 
   const save = (values: Record<string, string>) => {
     connectPayout(method.key, values);
+    playSfx('unlock');
     // Drop the modal and the method list, landing back on Exchange where the
     // top button now reads "Connected".
     router.dismissTo('/exchange');
@@ -35,7 +43,7 @@ export default function ConnectPayoutScreen() {
 
   return (
     <View style={styles.container}>
-      <Pressable style={StyleSheet.absoluteFill} onPress={close} accessibilityLabel="Close">
+      <Pressable style={StyleSheet.absoluteFill} onPress={closeFromBackdrop} accessibilityLabel="Close">
         <BlurView
           intensity={30}
           tint="dark"

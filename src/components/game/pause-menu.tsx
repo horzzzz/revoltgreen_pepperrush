@@ -63,7 +63,7 @@ export function PauseMenu({
             <GameButton {...BUTTON} label="Restart" onPress={onRestart} />
             <GameButton {...BUTTON} label="Exchange" onPress={onExchange} />
             <GameButton {...BUTTON} label="Settings" onPress={onSettings} />
-            <GameButton {...BUTTON} label="Main Menu" onPress={onMainMenu} />
+            <GameButton {...BUTTON} label="Main Menu" onPress={onMainMenu} sfx="ui-back" />
           </View>
         </View>
       </BlurView>
