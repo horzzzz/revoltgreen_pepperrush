@@ -4,6 +4,7 @@ import { AppText } from '@/components/ui/app-text';
 import { FreeCoinsBanner } from '@/components/shop/free-coins-banner';
 import { PackTile } from '@/components/shop/pack-tile';
 import { VipPackCard } from '@/components/shop/vip-pack-card';
+import { FEATURE_FLAGS } from '@/constants/flags';
 import { GameColors } from '@/constants/theme';
 import { useBilling } from '@/game/billing';
 import { addCoins } from '@/game/player';
@@ -37,7 +38,9 @@ export function ShopPanel() {
         },
       ]}>
       <View style={[styles.rows, { width: CONTENT_WIDTH * scale, gap: ROW_GAP * scale }]}>
-        <FreeCoinsBanner amount={FREE_COINS} onClaim={() => addCoins(FREE_COINS)} />
+        {FEATURE_FLAGS.ads ? (
+          <FreeCoinsBanner amount={FREE_COINS} onClaim={() => addCoins(FREE_COINS)} />
+        ) : null}
 
         <View style={[styles.pair, { gap: ROW_GAP * scale }]}>
           <PackTile

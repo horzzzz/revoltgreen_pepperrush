@@ -11,6 +11,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { LoadingScreen } from '@/components/splash/loading-screen';
+import { initAnalytics } from '@/game/analytics';
 import { initAudio, startMusic } from '@/game/audio/engine';
 import { hydrateAudioSettings } from '@/game/audio/settings';
 import { BillingProvider } from '@/game/billing';
@@ -35,6 +36,7 @@ export default function RootLayout() {
   // `initAudio()` is a no-op-until-ready singleton, so nothing here blocks on
   // it landing before the app's first frame.
   useEffect(() => {
+    initAnalytics();
     void initAudio();
     Promise.all([
       hydratePlayer(),

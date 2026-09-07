@@ -1,7 +1,8 @@
-import { StyleSheet, View } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/app-text';
 import { PressableScale } from '@/components/ui/pressable-scale';
+import { LEGAL_URLS } from '@/constants/legal';
 import { MenuColors } from '@/constants/theme';
 import { useDesignScale } from '@/hooks/use-design-scale';
 
@@ -10,8 +11,15 @@ type LegalNoteProps = {
   onOpenPrivacy?: () => void;
 };
 
+const openUrl = (url: string) => () => {
+  Linking.openURL(url).catch(() => {});
+};
+
 /** 18+ notice under the Play button (Figma node 1:182). */
-export function LegalNote({ onOpenTerms, onOpenPrivacy }: LegalNoteProps) {
+export function LegalNote({
+  onOpenTerms = openUrl(LEGAL_URLS.terms),
+  onOpenPrivacy = openUrl(LEGAL_URLS.privacy),
+}: LegalNoteProps) {
   const scale = useDesignScale();
 
   return (

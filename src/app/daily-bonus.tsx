@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { DailyBonusCard } from '@/components/daily/daily-bonus-card';
 import { ScreenTopBar } from '@/components/ui/screen-top-bar';
+import { ConfettiRain } from '@/components/vfx/confetti-rain';
 import { SplashColors } from '@/constants/theme';
 import { playSfx } from '@/game/audio/engine';
 import { formatCountdown } from '@/game/cooldown';
@@ -18,6 +19,9 @@ export default function DailyBonusScreen() {
   const router = useRouter();
   const daily = useDailyStatus();
   const [remaining, setRemaining] = useState(0);
+  // Once claimed, the screen stays put on a celebration rather than popping
+  // straight back to the menu -- the player gets to see what they won.
+  const [claimed, setClaimed] = useState(false);
 
   // Live countdown while the bonus is on cooldown.
   useEffect(() => {
@@ -29,20 +33,30 @@ export default function DailyBonusScreen() {
   }, [daily.canClaim, daily.nextAt]);
 
   const claim = () => {
-    claimDailyBonus();
+    if (!claimDailyBonus()) return;
     playSfx('reward-claim');
-    router.back();
+    setClaimed(true);
   };
 
   return (
     <View style={styles.container}>
       <Image source={BG_ASSET} style={StyleSheet.absoluteFill} contentFit="cover" />
+
       <DailyBonusCard
         amount={DAILY_BONUS_COINS}
         onClaim={claim}
-        disabled={!daily.canClaim}
+        onContinue={() => router.back()}
+        claimed={claimed}
+        disabled={!daily.canClaim && !claimed}
         countdownLabel={formatCountdown(remaining)}
       />
+
+      {claimed ? (
+        <View style={StyleSheet.absoluteFill} pointerEvents="none">
+          <ConfettiRain />
+        </View>
+      ) : null}
+
       <ScreenTopBar title="Daily Bonus" onBack={() => router.back()} />
     </View>
   );

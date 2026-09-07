@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { PlayerRow } from '@/components/leaderboard/player-row';
@@ -12,6 +13,8 @@ const ROW_GAP = 8;
 const GROUP_GAP = 12;
 /** Node 1:572 -- air between the list and the pinned "You" row. */
 const LIST_TO_YOU = 36;
+/** Kept in step with `ROW_HEIGHT` in `player-row.tsx`. */
+const ROW_HEIGHT = 69;
 
 type LeaderboardPanelProps = {
   /** The whole table, player included. */
@@ -29,9 +32,33 @@ export function LeaderboardPanel({ rows, you }: LeaderboardPanelProps) {
   const podium = rows.slice(0, PODIUM_SIZE);
   const rest = rows.slice(PODIUM_SIZE);
 
+  const scroller = useRef<ScrollView>(null);
+  const mineIndex = rows.findIndex((standing) => standing.isPlayer);
+
+  // Bring the player's inline row into view once, so the pulsing ring on it is
+  // the first thing seen even when they rank well down the list. The list is a
+  // fixed grid (every row `ROW_HEIGHT`, known gaps), so the offset is computed
+  // rather than measured.
+  useEffect(() => {
+    if (mineIndex < 0) return;
+    const step = ROW_HEIGHT + ROW_GAP;
+    let y = PADDING + mineIndex * step;
+    if (mineIndex >= PODIUM_SIZE) {
+      // Past the podium group: swap that group's last gap for the wider one.
+      y += GROUP_GAP - ROW_GAP;
+    }
+    const target = Math.max(0, (y - 90) * scale);
+    const timer = setTimeout(
+      () => scroller.current?.scrollTo({ y: target, animated: true }),
+      350,
+    );
+    return () => clearTimeout(timer);
+  }, [mineIndex, scale]);
+
   return (
     <View style={[styles.panel, { borderRadius: 20 * scale, borderWidth: 1 * scale }]}>
       <ScrollView
+        ref={scroller}
         style={styles.list}
         contentContainerStyle={{
           paddingTop: PADDING * scale,
@@ -42,12 +69,12 @@ export function LeaderboardPanel({ rows, you }: LeaderboardPanelProps) {
         showsVerticalScrollIndicator={false}>
         <View style={{ gap: ROW_GAP * scale }}>
           {podium.map((standing) => (
-            <PlayerRow key={standing.rank} standing={standing} />
+            <PlayerRow key={standing.rank} standing={standing} mine={standing.isPlayer} />
           ))}
         </View>
         <View style={{ gap: ROW_GAP * scale }}>
           {rest.map((standing) => (
-            <PlayerRow key={standing.rank} standing={standing} />
+            <PlayerRow key={standing.rank} standing={standing} mine={standing.isPlayer} />
           ))}
         </View>
       </ScrollView>

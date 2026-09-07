@@ -1,12 +1,13 @@
 import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useEffect, useReducer } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/app-text';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { TopBarShell } from '@/components/ui/top-bar-shell';
-import { GameColors } from '@/constants/theme';
-import { useCoins } from '@/game/player';
+import { GameColors, MenuColors } from '@/constants/theme';
+import { canClaimDaily, canSpinWheelNow, useCoins } from '@/game/player';
 import { formatCoins } from '@/game/slot/bet';
 import { useDesignScale } from '@/hooks/use-design-scale';
 
@@ -29,6 +30,27 @@ export function TopBar() {
   const scale = useDesignScale();
   const router = useRouter();
   const balance = formatCoins(useCoins());
+
+  // The reward cooldowns are time-based and the menu stays mounted (and frozen)
+  // under the wheel / daily screens, so a store change alone doesn't refresh
+  // this bar. Re-check on every focus -- coming back from spinning the wheel or
+  // claiming the bonus -- and on a slow tick for a cooldown expiring in place.
+  const [, tick] = useReducer((n: number) => n + 1, 0);
+  useFocusEffect(
+    useCallback(() => {
+      tick();
+    }, []),
+  );
+  useEffect(() => {
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // A red dot on a shortcut whose reward is waiting to be collected.
+  const alerts: Partial<Record<(typeof ACTIONS)[number]['key'], boolean>> = {
+    wheel: canSpinWheelNow(),
+    gift: canClaimDaily(),
+  };
 
   const handlers: Record<(typeof ACTIONS)[number]['key'], () => void> = {
     leaderboard: () => router.push('/leaderboard'),
@@ -67,9 +89,14 @@ export function TopBar() {
           ]}
           accessibilityRole="button"
           accessibilityLabel="Add coins">
-          <AppText weight="bold" style={{ fontSize: 18 * scale, lineHeight: 20 * scale }}>
-            +
-          </AppText>
+          {/* Drawn as two bars rather than a "+" glyph -- the font's plus sits
+              off its own baseline and never lands dead-centre in the circle. */}
+          <View
+            style={[styles.plusBar, { width: 12 * scale, height: 2.4 * scale, marginLeft: -6 * scale, marginTop: -1.2 * scale }]}
+          />
+          <View
+            style={[styles.plusBar, { width: 2.4 * scale, height: 12 * scale, marginLeft: -1.2 * scale, marginTop: -6 * scale }]}
+          />
         </PressableScale>
       </View>
 
@@ -79,12 +106,27 @@ export function TopBar() {
             key={action.key}
             onPress={handlers[action.key]}
             accessibilityRole="button"
-            accessibilityLabel={action.key}>
+            accessibilityLabel={alerts[action.key] ? `${action.key}, reward available` : action.key}>
             <Image
               source={action.source}
               style={{ width: action.width * scale, height: 36 * scale }}
               contentFit="contain"
             />
+            {alerts[action.key] ? (
+              <View
+                style={[
+                  styles.badge,
+                  {
+                    width: 10 * scale,
+                    height: 10 * scale,
+                    borderRadius: 5 * scale,
+                    borderWidth: 1.5 * scale,
+                    right: -2 * scale,
+                    top: -1 * scale,
+                  },
+                ]}
+              />
+            ) : null}
           </PressableScale>
         ))}
       </View>
@@ -115,8 +157,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // Two bars pinned to the circle's exact centre (top/left 50% + negative
+  // margins of half their own size), so the "+" is centred by geometry, not
+  // by font metrics.
+  plusBar: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    backgroundColor: MenuColors.text,
+    borderRadius: 999,
+  },
   actions: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  badge: {
+    position: 'absolute',
+    backgroundColor: '#FF3B30',
+    borderColor: MenuColors.text,
   },
 });

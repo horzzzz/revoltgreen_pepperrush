@@ -80,7 +80,7 @@ export default function MenuScreen() {
           styles.stack,
           { bottom: insets.bottom + STACK_BOTTOM_GAP * scale, gap: STACK_GAP * scale },
         ]}>
-        <GameButton label="Play" {...PLAY} onPress={() => router.push('/game')} />
+        <GameButton label="Play" {...PLAY} emphasis onPress={() => router.push('/game')} />
         <LegalNote />
       </View>
 

@@ -10,12 +10,13 @@
  * the store reports it as `purchased`, and `grantOnce` (see
  * `@/game/purchases`) makes crediting it idempotent against replays.
  */
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ErrorCode, useIAP, type Product, type Purchase } from 'expo-iap';
 
+import { parsePrice, reportPurchase } from '@/game/analytics';
 import { playSfx } from '@/game/audio/engine';
 import { grantOnce } from '@/game/purchases';
-import { PACK_SKUS, type Pack } from '@/game/shop';
+import { PACK_SKUS, packForProductId, type Pack } from '@/game/shop';
 
 type BillingState = {
   /** Whether the store connection (StoreKit / Play Billing) is up. */
@@ -40,17 +41,32 @@ export function BillingProvider({ children }: { children: ReactNode }) {
   const [pendingSku, setPendingSku] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // The `useIAP` error callback is registered once, so it can't read the
+  // `pendingSku` state -- a ref carries the SKU that is mid-purchase into it.
+  const pendingSkuRef = useRef<string | null>(null);
+  useEffect(() => {
+    pendingSkuRef.current = pendingSku;
+  }, [pendingSku]);
+
   const { connected, products, fetchProducts, requestPurchase, finishTransaction } = useIAP({
     onPurchaseSuccess: (purchase: Purchase) => {
       void handlePurchase(purchase);
     },
     onPurchaseError: (purchaseError) => {
+      const sku = pendingSkuRef.current;
       setPendingSku(null);
+      if (sku) reportPurchase('error', sku, priceForId(sku));
       if (purchaseError.code === ErrorCode.UserCancelled) return;
       playSfx('ui-denied');
       setError(purchaseError.message);
     },
   });
+
+  function priceForId(productId: string): number | undefined {
+    return parsePrice(
+      productDisplayPrice(products, productId) ?? packForProductId(productId)?.fallbackPrice,
+    );
+  }
 
   async function handlePurchase(purchase: Purchase) {
     try {
@@ -59,6 +75,7 @@ export function BillingProvider({ children }: { children: ReactNode }) {
       if (purchase.purchaseState === 'purchased') {
         await grantOnce(purchase);
         await finishTransaction({ purchase, isConsumable: true });
+        reportPurchase('success', purchase.productId, priceForId(purchase.productId));
         playSfx('purchase');
       }
     } catch (err) {
@@ -87,6 +104,11 @@ export function BillingProvider({ children }: { children: ReactNode }) {
         if (pendingSku || !connected) return;
         setError(null);
         setPendingSku(pack.productId);
+        reportPurchase(
+          'click',
+          pack.productId,
+          parsePrice(productDisplayPrice(products, pack.productId) ?? pack.fallbackPrice),
+        );
         requestPurchase({
           type: 'in-app',
           request: {

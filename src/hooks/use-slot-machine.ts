@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { DROP_MS, REEL_STAGGER_MS, SPIN_MS, SPIN_TOTAL_MS } from '@/components/game/board-layout';
 import { WIN_POPUP_MS } from '@/constants/vfx';
+import { reportGame } from '@/game/analytics';
 import { playSfx, startSpinSound, stopSpinSound } from '@/game/audio/engine';
 import { addCoins, spendCoins, useCoins } from '@/game/player';
 import { type AutospinCount, DEFAULT_AUTOSPIN, DEFAULT_BET } from '@/game/slot/bet';
@@ -106,6 +107,7 @@ export function useSlotMachine() {
     stopSpinSound();
 
     const won = payout.total > 0;
+    reportGame(won ? 'win' : 'loss');
 
     if (won) {
       addCoins(payout.total);
@@ -187,6 +189,8 @@ export function useSlotMachine() {
     if (autospinLeftRef.current > 0 && autospinLeftRef.current !== Infinity) {
       setAutospinLeft(autospinLeftRef.current - 1);
     }
+
+    reportGame('start');
 
     busyRef.current = true;
     const outcome = spinReels();

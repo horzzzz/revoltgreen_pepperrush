@@ -1,8 +1,10 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 import { AppText } from '@/components/ui/app-text';
-import { LeaderboardColors, SplashColors } from '@/constants/theme';
+import { useGlow } from '@/components/vfx/use-vfx';
+import { GameColors, LeaderboardColors, SplashColors } from '@/constants/theme';
 import { formatAmount, type Standing } from '@/game/leaderboard';
 import { useDesignScale } from '@/hooks/use-design-scale';
 
@@ -18,17 +20,26 @@ type PlayerRowProps = {
   standing: Standing;
   /** The "You" row (node 1:561): full-bleed, gradient, no outline. */
   highlighted?: boolean;
+  /** The player's row where it sits inline in the list -- gets a pulsing ring. */
+  mine?: boolean;
 };
 
-export function PlayerRow({ standing, highlighted = false }: PlayerRowProps) {
+export function PlayerRow({ standing, highlighted = false, mine = false }: PlayerRowProps) {
   const scale = useDesignScale();
+  const ringStyle = useGlow(mine, 0.9);
 
   const content = (
     <>
       <View style={{ width: RANK_WIDTH * scale, alignItems: 'center' }}>
         <AppText style={[styles.shadowed, { fontSize: 24 * scale }]}>{standing.rank}</AppText>
-        <AppText style={[styles.caption, { fontSize: 8 * scale, marginTop: -2 * scale }]}>
-          Number
+        <AppText
+          weight={mine ? 'bold' : 'regular'}
+          style={[
+            styles.caption,
+            mine && styles.youCaption,
+            { fontSize: 8 * scale, marginTop: -2 * scale },
+          ]}>
+          {mine ? 'You' : 'Number'}
         </AppText>
       </View>
 
@@ -57,6 +68,7 @@ export function PlayerRow({ standing, highlighted = false }: PlayerRowProps) {
       <View
         style={[
           styles.row,
+          mine && styles.mineRow,
           {
             height: ROW_HEIGHT * scale,
             padding: 12 * scale,
@@ -65,6 +77,16 @@ export function PlayerRow({ standing, highlighted = false }: PlayerRowProps) {
             justifyContent: 'space-between',
           },
         ]}>
+        {mine ? (
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.ring,
+              { borderRadius: 15 * scale, borderWidth: 2 * scale },
+              ringStyle,
+            ]}
+          />
+        ) : null}
         {content}
       </View>
     );
@@ -103,5 +125,22 @@ const styles = StyleSheet.create({
   caption: {
     opacity: 0.8,
     textTransform: 'capitalize',
+  },
+  youCaption: {
+    color: GameColors.chipGlow,
+    opacity: 1,
+    textTransform: 'uppercase',
+  },
+  mineRow: {
+    borderColor: GameColors.chipGlow,
+    backgroundColor: 'rgba(38,255,0,0.12)',
+  },
+  ring: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderColor: GameColors.chipGlow,
   },
 });

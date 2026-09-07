@@ -1,9 +1,12 @@
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { useEffect } from 'react';
+import { Linking, Pressable, StyleSheet, View } from 'react-native';
 
 import { SettingsCard } from '@/components/settings/settings-card';
+import { LEGAL_URLS } from '@/constants/legal';
+import { reportSettingsOpen } from '@/game/analytics';
 import { playSfx } from '@/game/audio/engine';
 import { setAudioSetting, useAudioSettings } from '@/game/audio/settings';
 
@@ -13,6 +16,10 @@ const SCRIM = ['rgba(8,40,8,0.8)', 'rgba(6,38,3,0.8)'] as const;
 export default function SettingsScreen() {
   const router = useRouter();
   const values = useAudioSettings();
+
+  useEffect(() => {
+    reportSettingsOpen();
+  }, []);
 
   // The card's own Close button already sounds through its PressableScale
   // (sfx="ui-back") -- this handler is only for the backdrop, which is a
@@ -32,7 +39,13 @@ export default function SettingsScreen() {
         </BlurView>
       </Pressable>
 
-      <SettingsCard values={values} onChange={setAudioSetting} onClose={close} />
+      <SettingsCard
+        values={values}
+        onChange={setAudioSetting}
+        onClose={close}
+        onOpenTerms={() => Linking.openURL(LEGAL_URLS.terms).catch(() => {})}
+        onOpenPrivacy={() => Linking.openURL(LEGAL_URLS.privacy).catch(() => {})}
+      />
     </View>
   );
 }

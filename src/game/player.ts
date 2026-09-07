@@ -224,6 +224,11 @@ export function wheelAvailableAt() {
   return state.lastWheelSpinAt + WHEEL_COOLDOWN_MS;
 }
 
+/** Whether the Wheel can be spun now -- cooldown up, or a free spin banked. */
+export function canSpinWheelNow(now: number = Date.now()) {
+  return state.freeSpins > 0 || canSpinWheel(now);
+}
+
 export function markWheelSpin() {
   state.lastWheelSpinAt = Date.now();
   emit();

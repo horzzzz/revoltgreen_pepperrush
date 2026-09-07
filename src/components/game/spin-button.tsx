@@ -4,7 +4,8 @@ import Animated from 'react-native-reanimated';
 
 import { AppText } from '@/components/ui/app-text';
 import { PressableScale } from '@/components/ui/pressable-scale';
-import { useBreathe } from '@/components/vfx/use-vfx';
+import { useBreathe, useGlow } from '@/components/vfx/use-vfx';
+import { GameColors } from '@/constants/theme';
 import { useDesignScale } from '@/hooks/use-design-scale';
 
 const SPIN_ASSET = require('@/assets/images/game/spin.png');
@@ -35,10 +36,13 @@ export function SpinButton({
 }: SpinButtonProps) {
   const scale = useDesignScale();
   const auto = autospinLeft > 0;
-  // The one animation in the app that loops without an end: a single node
-  // breathing while the button is waiting to be pressed. It stops the moment
-  // the reels start or the balance runs dry.
-  const breatheStyle = useBreathe(!disabled && !auto);
+  const idle = !disabled && !auto;
+  // The button waiting to be pressed: a deeper breath than the app's other
+  // idle pulses, backed by a green halo that swells behind the plate -- the
+  // spin button is the one control the whole screen is built around, so it
+  // gets the loudest resting state.
+  const breatheStyle = useBreathe(idle, 0.06);
+  const glowStyle = useGlow(idle, 0.4);
 
   const caption = auto
     ? autospinLeft === Infinity
@@ -57,6 +61,10 @@ export function SpinButton({
         accessibilityLabel={auto ? 'Stop autospin' : 'Spin'}
         accessibilityState={{ disabled: disabled && !auto }}
         style={{ width: BUTTON.width * scale, height: BUTTON.height * scale }}>
+        <Animated.View
+          pointerEvents="none"
+          style={[styles.glow, { borderRadius: (BUTTON.width * scale) / 2 }, glowStyle]}
+        />
         <Animated.View style={[StyleSheet.absoluteFill, breatheStyle]}>
           <Image
             source={SPIN_ASSET}
@@ -82,5 +90,16 @@ const styles = StyleSheet.create({
   },
   dimmed: {
     opacity: 0.5,
+  },
+  // A flat green disc behind the plate -- no shadow or elevation (those are
+  // the one thing the effects layer never asks for on a moving/animating
+  // node); the swell comes purely from the pulsing opacity.
+  glow: {
+    position: 'absolute',
+    top: '18%',
+    left: '18%',
+    right: '18%',
+    bottom: '18%',
+    backgroundColor: GameColors.chipGlow,
   },
 });
