@@ -18,12 +18,19 @@ const BUTTON = { width: 334, height: 94, fontSize: 40, gap: 12 } as const;
 type PauseMenuProps = {
   onResume: () => void;
   onRestart: () => void;
+  onExchange: () => void;
   onSettings: () => void;
   onMainMenu: () => void;
 };
 
 /** Pause menu (Figma node 1:213). No close button -- Play is what dismisses it. */
-export function PauseMenu({ onResume, onRestart, onSettings, onMainMenu }: PauseMenuProps) {
+export function PauseMenu({
+  onResume,
+  onRestart,
+  onExchange,
+  onSettings,
+  onMainMenu,
+}: PauseMenuProps) {
   const scale = useDesignScale();
 
   return (
@@ -54,6 +61,7 @@ export function PauseMenu({ onResume, onRestart, onSettings, onMainMenu }: Pause
           <View style={{ gap: BUTTON.gap * scale }}>
             <GameButton {...BUTTON} label="Play" onPress={onResume} />
             <GameButton {...BUTTON} label="Restart" onPress={onRestart} />
+            <GameButton {...BUTTON} label="Exchange" onPress={onExchange} />
             <GameButton {...BUTTON} label="Settings" onPress={onSettings} />
             <GameButton {...BUTTON} label="Main Menu" onPress={onMainMenu} />
           </View>

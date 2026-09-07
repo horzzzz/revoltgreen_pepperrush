@@ -6,30 +6,20 @@ import { PressableScale } from '@/components/ui/pressable-scale';
 import { TopBarShell } from '@/components/ui/top-bar-shell';
 import { useDesignScale } from '@/hooks/use-design-scale';
 
-const PAUSE_ASSET = require('@/assets/images/game/icon-pause.png');
 const MENU_ASSET = require('@/assets/images/game/icon-menu.png');
 
 const ICON_SIZE = 36;
 
 type GameTopBarProps = {
-  onPause: () => void;
   onMenu: () => void;
 };
 
-/** Pause, balance and the menu button (Figma node 1:486, the bar's variant 3). */
-export function GameTopBar({ onPause, onMenu }: GameTopBarProps) {
+/** Balance and the menu button (Figma node 1:486). The menu button opens the pause menu. */
+export function GameTopBar({ onMenu }: GameTopBarProps) {
   const scale = useDesignScale();
 
   return (
     <TopBarShell style={styles.bar}>
-      <PressableScale onPress={onPause} accessibilityRole="button" accessibilityLabel="Pause">
-        <Image
-          source={PAUSE_ASSET}
-          style={{ width: ICON_SIZE * scale, height: ICON_SIZE * scale }}
-          contentFit="contain"
-        />
-      </PressableScale>
-
       <BalancePill />
 
       <PressableScale onPress={onMenu} accessibilityRole="button" accessibilityLabel="Menu">

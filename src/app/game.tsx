@@ -131,7 +131,7 @@ export default function GameScreen() {
         />
       </View>
 
-      <GameTopBar onPause={openPause} onMenu={() => router.back()} />
+      <GameTopBar onMenu={openPause} />
 
       {betPanelOpen ? (
         <Pressable
@@ -173,6 +173,7 @@ export default function GameScreen() {
         <PauseMenu
           onResume={() => setPaused(false)}
           onRestart={restart}
+          onExchange={() => {}}
           onSettings={() => router.push('/settings')}
           onMainMenu={() => router.back()}
         />
