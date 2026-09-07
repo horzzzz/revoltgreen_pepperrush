@@ -1,5 +1,6 @@
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -27,10 +28,11 @@ const STACK_GAP = 36;
 /** Node 1:355 -- the Play plate. */
 const PLAY = { width: 382, height: 94, fontSize: 40 } as const;
 
-/** Main menu (Figma node 1:173). Every control is still a stub. */
+/** Main menu (Figma node 1:173). */
 export default function MenuScreen() {
   const scale = useDesignScale();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { width } = useWindowDimensions();
 
   // Anchoring the logo to the bar (rather than to a fixed 122pt) keeps the
@@ -78,7 +80,7 @@ export default function MenuScreen() {
           styles.stack,
           { bottom: insets.bottom + STACK_BOTTOM_GAP * scale, gap: STACK_GAP * scale },
         ]}>
-        <GameButton label="Play" {...PLAY} />
+        <GameButton label="Play" {...PLAY} onPress={() => router.push('/game')} />
         <LegalNote />
       </View>
 

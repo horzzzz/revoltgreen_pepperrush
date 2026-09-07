@@ -39,6 +39,20 @@ export const LeaderboardColors = {
   text: '#ffffff',
 } as const;
 
+/** Game screen and the panels over it (Figma nodes 1:90, 1:493, 1:462). */
+export const GameColors = {
+  /** Body of the bet panel (node 1:493) and of the win card (node 1:465). */
+  panel: LeaderboardColors.panel,
+  panelBorder: SplashColors.fillEdge,
+  /** Glow around the chip that is currently picked (node 1:498). */
+  chipGlow: '#26ff00',
+  /** Jackpot plates carry black text on the metal (node 1:146). */
+  jackpotText: '#000000',
+  /** Backdrop the overlays and the bet panel darken the game with. */
+  scrim: 'rgba(0,0,0,0.72)',
+  text: '#ffffff',
+} as const;
+
 /**
  * GFS Neohellenic is the app-wide typeface -- every piece of text uses it.
  * Loaded in `src/app/_layout.tsx`; render text through `AppText` rather than

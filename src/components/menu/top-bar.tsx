@@ -5,7 +5,8 @@ import { StyleSheet, View } from 'react-native';
 import { AppText } from '@/components/ui/app-text';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { TopBarShell } from '@/components/ui/top-bar-shell';
-import { PLAYER } from '@/game/player';
+import { useCoins } from '@/game/player';
+import { formatCoins } from '@/game/slot/bet';
 import { useDesignScale } from '@/hooks/use-design-scale';
 
 const PILL_ASSET = require('@/assets/images/menu/pill.png');
@@ -19,14 +20,11 @@ const ACTIONS = [
   { key: 'settings', source: require('@/assets/images/menu/icon-settings.png'), width: 36 },
 ] as const;
 
-type TopBarProps = {
-  balance?: number;
-};
-
 /** Balance pill and shortcut buttons pinned to the top (Figma node 1:190). */
-export function TopBar({ balance = PLAYER.coins }: TopBarProps) {
+export function TopBar() {
   const scale = useDesignScale();
   const router = useRouter();
+  const balance = formatCoins(useCoins());
 
   const handlers: Record<(typeof ACTIONS)[number]['key'], () => void> = {
     leaderboard: () => router.push('/leaderboard'),
