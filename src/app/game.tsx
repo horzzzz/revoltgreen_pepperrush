@@ -8,6 +8,7 @@ import { BetPanel } from '@/components/game/bet-panel';
 import { BigWinOverlay } from '@/components/game/big-win-overlay';
 import { GameTopBar } from '@/components/game/game-top-bar';
 import { JackpotRail } from '@/components/game/jackpot-rail';
+import { PauseMenu } from '@/components/game/pause-menu';
 import { POT, POT_OVERLAP, PotRow } from '@/components/game/pot-row';
 import { ReelGrid } from '@/components/game/reel-grid';
 import { SpinButton } from '@/components/game/spin-button';
@@ -42,6 +43,7 @@ export default function GameScreen() {
   const router = useRouter();
   const machine = useSlotMachine();
   const [betPanelOpen, setBetPanelOpen] = useState(false);
+  const [paused, setPaused] = useState(false);
 
   const displayedWin = useCountUp(machine.win);
   // The bar's own height comes from the safe area, so everything under it is
@@ -51,6 +53,19 @@ export default function GameScreen() {
   const closeBetPanel = (bet: number) => {
     machine.setBet(bet);
     setBetPanelOpen(false);
+  };
+
+  const openPause = () => {
+    machine.stopAutospin();
+    setPaused(true);
+  };
+
+  // Restart drops whatever the reels were showing so the round comes back
+  // clean, same as Play, just with the last result cleared first.
+  const restart = () => {
+    machine.stopAutospin();
+    machine.dismissOverlay();
+    setPaused(false);
   };
 
   return (
@@ -116,7 +131,7 @@ export default function GameScreen() {
         />
       </View>
 
-      <GameTopBar onPause={machine.stopAutospin} onMenu={() => router.back()} />
+      <GameTopBar onPause={openPause} onMenu={() => router.back()} />
 
       {betPanelOpen ? (
         <Pressable
@@ -148,10 +163,19 @@ export default function GameScreen() {
         </View>
       ) : null}
 
+      {/* Unlike the plain win screen, this one draws its own blurred backdrop
+          (Figma node 1:204) instead of sitting on the shared flat scrim. */}
       {machine.overlay?.kind === 'bigWin' ? (
-        <View style={[StyleSheet.absoluteFill, styles.scrim]}>
-          <BigWinOverlay amount={machine.overlay.amount} onDismiss={machine.dismissOverlay} />
-        </View>
+        <BigWinOverlay amount={machine.overlay.amount} onDismiss={machine.dismissOverlay} />
+      ) : null}
+
+      {paused ? (
+        <PauseMenu
+          onResume={() => setPaused(false)}
+          onRestart={restart}
+          onSettings={() => router.push('/settings')}
+          onMainMenu={() => router.back()}
+        />
       ) : null}
     </View>
   );
