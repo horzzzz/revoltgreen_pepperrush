@@ -12,10 +12,21 @@ import {
   useCoins,
   useUsd,
 } from '@/game/player';
+import { usePayout } from '@/game/payout';
 import { useDesignScale } from '@/hooks/use-design-scale';
 
-const PAYOUT_METHODS = require('@/assets/images/exchange/payout-methods.png');
 const COIN_ASSET = require('@/assets/images/menu/coin.png');
+
+/** Node I1:901;1:605 -- a decorative strip of supported payout methods. */
+const PREVIEW_ICONS = [
+  require('@/assets/images/exchange/methods/paypal.png'),
+  require('@/assets/images/exchange/methods/visa.png'),
+  require('@/assets/images/exchange/methods/tether.png'),
+  require('@/assets/images/exchange/methods/google-pay.png'),
+  require('@/assets/images/exchange/methods/btc.png'),
+  require('@/assets/images/exchange/methods/eth.png'),
+];
+const PREVIEW_ICON_SIZE = 50;
 
 /** Node 1:901 -- the card, and node I1:901;1:590's inner column width. */
 const CARD = { width: 382, padding: 24, radius: 20 } as const;
@@ -45,6 +56,7 @@ export function ExchangePanel({ onPlay, onAddPayout }: ExchangePanelProps) {
   const scale = useDesignScale();
   const coins = useCoins();
   const usd = useUsd();
+  const payout = usePayout();
 
   const coinProgress = Math.min(coins / COINS_PER_EXCHANGE, 1);
   const usdProgress = Math.min(usd / EXCHANGE_MIN_USD, 1);
@@ -67,7 +79,7 @@ export function ExchangePanel({ onPlay, onAddPayout }: ExchangePanelProps) {
       <View style={[styles.inner, { width: CONTENT_WIDTH * scale }]}>
         <View style={[styles.topGroup, { gap: 24 * scale }]}>
           <GameButton
-            label="Add payout method"
+            label={payout ? 'Connected' : 'Add payout method'}
             width={CONTENT_WIDTH}
             height={72}
             fontSize={24}
@@ -106,13 +118,21 @@ export function ExchangePanel({ onPlay, onAddPayout }: ExchangePanelProps) {
             <AppText style={{ fontSize: 36 * scale }}>${USD_PER_EXCHANGE}</AppText>
           </View>
 
-          {/* Payout methods (node I1:901;1:605) -- decorative until "Add payout
-              method" is wired up. */}
-          <Image
-            source={PAYOUT_METHODS}
-            style={{ width: CONTENT_WIDTH * scale, height: 50 * scale }}
-            contentFit="contain"
-          />
+          {/* Payout methods (node I1:901;1:605) -- decorative. */}
+          <View style={styles.rowBetween}>
+            {PREVIEW_ICONS.map((icon, i) => (
+              <View
+                key={i}
+                style={{
+                  width: PREVIEW_ICON_SIZE * scale,
+                  height: PREVIEW_ICON_SIZE * scale,
+                  borderRadius: (PREVIEW_ICON_SIZE / 2) * scale,
+                  overflow: 'hidden',
+                }}>
+                <Image source={icon} style={StyleSheet.absoluteFill} contentFit="cover" />
+              </View>
+            ))}
+          </View>
 
           {/* Dollar balance (node I1:901;1:651). */}
           <View

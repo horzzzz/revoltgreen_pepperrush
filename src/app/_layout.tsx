@@ -12,6 +12,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { LoadingScreen } from '@/components/splash/loading-screen';
 import { BillingProvider } from '@/game/billing';
+import { hydratePayout } from '@/game/payout';
 import { hydratePlayer } from '@/game/player';
 import { hydratePurchases } from '@/game/purchases';
 
@@ -30,7 +31,9 @@ export default function RootLayout() {
   // Restore the saved balance / free spins / cooldowns before anything reads
   // the player store.
   useEffect(() => {
-    Promise.all([hydratePlayer(), hydratePurchases()]).finally(() => setHydrated(true));
+    Promise.all([hydratePlayer(), hydratePurchases(), hydratePayout()]).finally(() =>
+      setHydrated(true),
+    );
   }, []);
 
   // The native splash stays up until the font is ready, so the loading screen
@@ -60,6 +63,10 @@ export default function RootLayout() {
               <Stack.Screen name="shop" />
               <Stack.Screen name="exchange" />
               <Stack.Screen name="add-payout-method" />
+              <Stack.Screen
+                name="connect-payout"
+                options={{ presentation: 'transparentModal', animation: 'fade' }}
+              />
               <Stack.Screen
                 name="settings"
                 options={{ presentation: 'transparentModal', animation: 'fade' }}

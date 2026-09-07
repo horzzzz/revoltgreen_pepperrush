@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { PayoutMethodsPanel } from '@/components/exchange/payout-methods-panel';
 import { ScreenTopBar } from '@/components/ui/screen-top-bar';
 import { SplashColors } from '@/constants/theme';
+import { usePayout } from '@/game/payout';
 import { useDesignScale } from '@/hooks/use-design-scale';
 
 // Reused from the menu so the backdrop does not jump on the way in.
@@ -21,6 +22,7 @@ export default function AddPayoutMethodScreen() {
   const scale = useDesignScale();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const connection = usePayout();
 
   const topBarHeight = insets.top + (5 + 36 + 12) * scale;
 
@@ -38,7 +40,10 @@ export default function AddPayoutMethodScreen() {
           },
         ]}
         showsVerticalScrollIndicator={false}>
-        <PayoutMethodsPanel onConnect={() => {}} />
+        <PayoutMethodsPanel
+          connectedKey={connection?.method ?? null}
+          onConnect={(method) => router.push({ pathname: '/connect-payout', params: { method } })}
+        />
       </ScrollView>
 
       <ScreenTopBar title="Add payout method" onBack={() => router.back()} />
