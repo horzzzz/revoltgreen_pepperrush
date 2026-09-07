@@ -1,7 +1,12 @@
 import { Image } from 'expo-image';
 import { StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 
-import { isFull, POTS, type PotState } from '@/game/slot/pots';
+import { SparkBurst } from '@/components/vfx/spark-burst';
+import { useBump, useFlash } from '@/components/vfx/use-vfx';
+import { GameColors } from '@/constants/theme';
+import { SPARKS } from '@/constants/vfx';
+import { isFull, POTS, type PotKey, type PotState } from '@/game/slot/pots';
 import { useDesignScale } from '@/hooks/use-design-scale';
 
 /** Nodes 1:820/1:822, 1:824/1:826, 1:828/1:830 -- empty and full of chilis. */
@@ -33,25 +38,70 @@ const POT_GAP = 8;
  */
 export const POT_OVERLAP = 35;
 
+/** How far the chili sparks scatter around a pot that just took one. */
+const SPARK_RADIUS = 46;
+
 type PotRowProps = {
   pots: PotState;
+  /** Per pot: a counter that goes up each time it takes a chili. */
+  bump: Record<PotKey, number>;
 };
 
 /** COLLECT / MULTIPLIER / 2X BOARD above the reels (Figma node 1:95). */
-export function PotRow({ pots }: PotRowProps) {
+export function PotRow({ pots, bump }: PotRowProps) {
   const scale = useDesignScale();
 
   return (
     <View style={[styles.row, { gap: POT_GAP * scale }]}>
       {POTS.map(({ key }) => (
-        <Image
-          key={key}
-          source={isFull(pots, key) ? POT_ART[key].full : POT_ART[key].empty}
-          style={{ width: POT.width * scale, height: POT.height * scale }}
-          contentFit="contain"
-        />
+        <Pot key={key} potKey={key} full={isFull(pots, key)} bump={bump[key]} />
       ))}
     </View>
+  );
+}
+
+type PotProps = {
+  potKey: PotKey;
+  full: boolean;
+  bump: number;
+};
+
+function Pot({ potKey, full, bump }: PotProps) {
+  const scale = useDesignScale();
+  const bumpStyle = useBump(bump, 0.16);
+
+  // Filling up is a one-way trip for now -- there is no bonus round to empty a
+  // pot again (see `pots.ts`) -- so the flag itself works as the trigger: it
+  // goes 0 -> 1 exactly once, on the spin that tops the pot off.
+  const fullGlowStyle = useFlash(full ? 1 : 0, 3, 0.75);
+
+  const size = { width: POT.width * scale, height: POT.height * scale };
+
+  return (
+    <Animated.View style={[size, bumpStyle]}>
+      <Image source={POT_ART[potKey][full ? 'full' : 'empty']} style={size} contentFit="contain" />
+
+      <Animated.View
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            borderRadius: 18 * scale,
+            borderWidth: 2 * scale,
+            borderColor: GameColors.chipGlow,
+          },
+          fullGlowStyle,
+        ]}
+        pointerEvents="none"
+      />
+
+      <SparkBurst
+        trigger={bump}
+        count={SPARKS.pot}
+        radius={SPARK_RADIUS}
+        size={7}
+        duration={700}
+      />
+    </Animated.View>
   );
 }
 

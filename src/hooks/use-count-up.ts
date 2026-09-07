@@ -3,8 +3,12 @@ import { useEffect, useState } from 'react';
 /**
  * Runs a number up to `target` so a win rolls onto the plate instead of
  * popping into place. Jumps straight to 0 when the board is cleared.
+ *
+ * `replay` is for the case the target alone cannot express: two wins in a row
+ * that happen to pay the same amount. Bumping it re-runs the roll even though
+ * the number has not moved.
  */
-export function useCountUp(target: number, duration = 700) {
+export function useCountUp(target: number, duration = 700, replay = 0) {
   const [value, setValue] = useState(target);
 
   useEffect(() => {
@@ -21,7 +25,7 @@ export function useCountUp(target: number, duration = 700) {
     });
 
     return () => cancelAnimationFrame(frame);
-  }, [target, duration]);
+  }, [target, duration, replay]);
 
   return value;
 }

@@ -22,6 +22,7 @@ import {
   WILD_HEIGHT,
 } from '@/components/game/board-layout';
 import { SYMBOL_ART } from '@/components/game/symbol-art';
+import { usePulseScale } from '@/components/vfx/use-vfx';
 import { ROW_COUNT } from '@/game/slot/reels';
 import { type Cell, REEL_SYMBOLS, WILD } from '@/game/slot/symbols';
 import { useDesignScale } from '@/hooks/use-design-scale';
@@ -32,6 +33,8 @@ const FILLER_LENGTH = 8;
 const FILLER_CELL_MS = 55;
 /** How far the column overshoots before it settles back. */
 const OVERSHOOT = 7;
+/** Beats a paying symbol throbs for once the board has settled. */
+const WIN_PULSE_CYCLES = 3;
 
 const FILLER_POOL = REEL_SYMBOLS.filter((symbol) => symbol !== WILD);
 
@@ -124,22 +127,46 @@ export function Reel({ cells, wildTop, spinning, stopDelay, winning, dimLosers }
 
       <Animated.View style={[StyleSheet.absoluteFill, resultStyle]}>
         {layOutColumn(cells, wildTop, winning).map((node) => (
-          <Image
-            key={node.row}
-            source={SYMBOL_ART[node.cell]}
-            style={{
-              position: 'absolute',
-              left: 0,
-              top: node.top * scale,
-              width: CELL * scale,
-              height: node.height * scale,
-              opacity: dimLosers && !node.winning ? 0.3 : 1,
-            }}
-            contentFit="contain"
-          />
+          <ReelCell key={node.row} node={node} scale={scale} dimLosers={dimLosers} />
         ))}
       </Animated.View>
     </View>
+  );
+}
+
+type ReelCellProps = {
+  node: CellNode;
+  scale: number;
+  dimLosers: boolean;
+};
+
+/**
+ * One drawn symbol. It is its own component purely so the throb can be a hook:
+ * `layOutColumn` returns between one and three nodes depending on where a
+ * two-cell wild fell, and a hook cannot live inside a loop over a list whose
+ * length moves.
+ */
+function ReelCell({ node, scale, dimLosers }: ReelCellProps) {
+  // `dimLosers` is the board's "this spin paid" flag, so it goes false on the
+  // next spin and true again on the next win -- which is what restarts the
+  // throb rather than leaving it running.
+  const pulseStyle = usePulseScale(dimLosers && node.winning, 0.09, WIN_PULSE_CYCLES);
+
+  return (
+    <Animated.View
+      style={[
+        {
+          position: 'absolute',
+          left: 0,
+          top: node.top * scale,
+          width: CELL * scale,
+          height: node.height * scale,
+          opacity: dimLosers && !node.winning ? 0.3 : 1,
+        },
+        pulseStyle,
+      ]}>
+      <Image source={SYMBOL_ART[node.cell]} style={StyleSheet.absoluteFill} contentFit="contain" />
+    </Animated.View>
   );
 }
 

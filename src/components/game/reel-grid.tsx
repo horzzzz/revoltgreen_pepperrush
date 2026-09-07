@@ -8,6 +8,7 @@ import {
   MACHINE,
   REEL_STAGGER_MS,
 } from '@/components/game/board-layout';
+import { BoardVfx } from '@/components/game/board-vfx';
 import { Reel } from '@/components/game/reel';
 import { REEL_COUNT } from '@/game/slot/reels';
 import type { Cell } from '@/game/slot/symbols';
@@ -24,10 +25,25 @@ type ReelGridProps = {
   winning: boolean[][];
   /** Dim everything that did not pay, once the spin has resolved. */
   dimLosers: boolean;
+  /** Replay counters for the celebration layer -- see `board-vfx.tsx`. */
+  winId: number;
+  popupWin: number;
+  popupId: number;
+  popupLive: boolean;
 };
 
 /** The machine frame with the 5x3 window cut into it (Figma node 1:109). */
-export function ReelGrid({ board, wildTop, spinning, winning, dimLosers }: ReelGridProps) {
+export function ReelGrid({
+  board,
+  wildTop,
+  spinning,
+  winning,
+  dimLosers,
+  winId,
+  popupWin,
+  popupId,
+  popupLive,
+}: ReelGridProps) {
   const scale = useDesignScale();
 
   return (
@@ -66,6 +82,15 @@ export function ReelGrid({ board, wildTop, spinning, winning, dimLosers }: ReelG
           />
         ))}
       </View>
+
+      {/* Last child on purpose: paint order is what puts the celebration over
+          the symbols, and `zIndex` would leak out of this subtree. */}
+      <BoardVfx
+        winId={winId}
+        popupWin={popupWin}
+        popupId={popupId}
+        popupLive={popupLive}
+      />
     </View>
   );
 }

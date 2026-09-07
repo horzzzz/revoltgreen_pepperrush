@@ -2,6 +2,7 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BetPanel } from '@/components/game/bet-panel';
@@ -15,10 +16,9 @@ import { SpinButton } from '@/components/game/spin-button';
 import { StatPlate } from '@/components/game/stat-plate';
 import { WinOverlay } from '@/components/game/win-overlay';
 import { PressableScale } from '@/components/ui/pressable-scale';
+import { useShake } from '@/components/vfx/use-vfx';
 import { GameColors, SplashColors } from '@/constants/theme';
 import { playSfx } from '@/game/audio/engine';
-import { formatMoney } from '@/game/slot/bet';
-import { useCountUp } from '@/hooks/use-count-up';
 import { useDesignScale } from '@/hooks/use-design-scale';
 import { useSlotMachine } from '@/hooks/use-slot-machine';
 
@@ -46,7 +46,11 @@ export default function GameScreen() {
   const [betPanelOpen, setBetPanelOpen] = useState(false);
   const [paused, setPaused] = useState(false);
 
-  const displayedWin = useCountUp(machine.win);
+  // Only the machine itself rings on a big win: the overlays are rendered
+  // outside this wrapper, so the celebration screen sits still over a game
+  // that is still shaking underneath it.
+  const shakeStyle = useShake(machine.vfx.bigWinId, 7);
+
   // The bar's own height comes from the safe area, so everything under it is
   // anchored to the bar rather than to the design's fixed 100pt.
   const topBarHeight = insets.top + (5 + 36 + 12) * scale;
@@ -64,75 +68,84 @@ export default function GameScreen() {
   // Restart drops whatever the reels were showing so the round comes back
   // clean, same as Play, just with the last result cleared first.
   const restart = () => {
-    machine.stopAutospin();
+    // `reset` covers stopping autospin, and also drops a spin that is still in
+    // flight -- Restart during a spin used to leave the reels to land into a
+    // round the player had already walked away from.
+    machine.reset();
     machine.dismissOverlay();
     setPaused(false);
   };
 
   return (
     <View style={styles.container}>
-      <Image source={BG_ASSET} style={StyleSheet.absoluteFill} contentFit="cover" />
+      <Animated.View style={[StyleSheet.absoluteFill, shakeStyle]}>
+        <Image source={BG_ASSET} style={StyleSheet.absoluteFill} contentFit="cover" />
 
-      <View style={[styles.centered, { top: topBarHeight + RAIL_TOP * scale }]}>
-        <JackpotRail />
-      </View>
+        <View style={[styles.centered, { top: topBarHeight + RAIL_TOP * scale }]}>
+          <JackpotRail />
+        </View>
 
-      <View
-        style={[styles.centered, { top: topBarHeight + RAIL_TOP * scale }]}
-        pointerEvents="none">
-        <Image
-          source={LOGO_ASSET}
-          style={{ width: LOGO.width * scale, height: LOGO.height * scale }}
-          contentFit="contain"
-        />
-      </View>
-
-      <View style={[styles.centered, { top: topBarHeight + STACK_TOP * scale }]}>
-        <View style={[styles.stack, { width: STACK_WIDTH * scale }]}>
-          {/*
-            The pots hang over the reel grid's top edge (Figma node 1:95). That
-            overlap is drawn by the separate PotRow block below, painted after
-            this one -- a spacer here just reserves the flow space they would
-            otherwise take, so the reel grid still lands in the right place.
-          */}
-          <View style={{ height: (POT.height - POT_OVERLAP) * scale }} />
-          <ReelGrid
-            board={machine.board}
-            wildTop={machine.wildTop}
-            winning={machine.winning}
-            spinning={machine.spinning}
-            dimLosers={machine.dimLosers}
+        <View
+          style={[styles.centered, { top: topBarHeight + RAIL_TOP * scale }]}
+          pointerEvents="none">
+          <Image
+            source={LOGO_ASSET}
+            style={{ width: LOGO.width * scale, height: LOGO.height * scale }}
+            contentFit="contain"
           />
+        </View>
 
-          <View style={styles.statRow}>
-            <StatPlate label="Win" value={formatMoney(displayedWin)} />
-            <PressableScale
-              onPress={() => setBetPanelOpen(true)}
-              accessibilityRole="button"
-              accessibilityLabel="Change bet">
-              <StatPlate label="Bet" value={formatMoney(machine.bet)} />
-            </PressableScale>
+        <View style={[styles.centered, { top: topBarHeight + STACK_TOP * scale }]}>
+          <View style={[styles.stack, { width: STACK_WIDTH * scale }]}>
+            {/*
+              The pots hang over the reel grid's top edge (Figma node 1:95). That
+              overlap is drawn by the separate PotRow block below, painted after
+              this one -- a spacer here just reserves the flow space they would
+              otherwise take, so the reel grid still lands in the right place.
+            */}
+            <View style={{ height: (POT.height - POT_OVERLAP) * scale }} />
+            <ReelGrid
+              board={machine.board}
+              wildTop={machine.wildTop}
+              winning={machine.winning}
+              spinning={machine.spinning}
+              dimLosers={machine.dimLosers}
+              winId={machine.vfx.winId}
+              popupWin={machine.vfx.popupWin}
+              popupId={machine.vfx.popupId}
+              popupLive={machine.vfx.popupLive}
+            />
+
+            <View style={styles.statRow}>
+              <StatPlate label="Win" value={machine.win} countUp highlightId={machine.vfx.winId} />
+              <PressableScale
+                onPress={() => setBetPanelOpen(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Change bet">
+                <StatPlate label="Bet" value={machine.bet} />
+              </PressableScale>
+            </View>
           </View>
         </View>
-      </View>
 
-      <View
-        style={[styles.centered, { top: topBarHeight + STACK_TOP * scale }]}
-        pointerEvents="none">
-        <PotRow pots={machine.pots} />
-      </View>
+        <View
+          style={[styles.centered, { top: topBarHeight + STACK_TOP * scale }]}
+          pointerEvents="none">
+          <PotRow pots={machine.pots} bump={machine.vfx.potBump} />
+        </View>
 
-      <View style={[styles.spin, { bottom: insets.bottom + SPIN_BOTTOM_GAP * scale }]}>
-        <SpinButton
-          onSpin={machine.spin}
-          onHold={() => machine.startAutospin(machine.autospin)}
-          onStopAuto={machine.stopAutospin}
-          disabled={!machine.canSpin}
-          autospinLeft={machine.autospinLeft}
-        />
-      </View>
+        <View style={[styles.spin, { bottom: insets.bottom + SPIN_BOTTOM_GAP * scale }]}>
+          <SpinButton
+            onSpin={machine.spin}
+            onHold={() => machine.startAutospin(machine.autospin)}
+            onStopAuto={machine.stopAutospin}
+            disabled={!machine.canSpin}
+            autospinLeft={machine.autospinLeft}
+          />
+        </View>
 
-      <GameTopBar onMenu={openPause} />
+        <GameTopBar onMenu={openPause} />
+      </Animated.View>
 
       {betPanelOpen ? (
         <Pressable

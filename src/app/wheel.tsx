@@ -40,8 +40,15 @@ const SPACE_ABOVE = 157;
 const SPACE_BELOW = 99;
 /** Button sits 76 off the frame bottom, of which 34 is the home indicator. */
 const BOTTOM_GAP = 42;
+/** How long the wheel keeps the stage before the result card takes it. */
+const REVEAL_DELAY_MS = 750;
 
-type Phase = 'idle' | 'spinning';
+/**
+ * `revealing` is the beat between the disc stopping and the result card coming
+ * up: the wheel is celebrating and the button has to stay locked, or a free
+ * spin could be started straight through the celebration.
+ */
+type Phase = 'idle' | 'spinning' | 'revealing';
 
 /** Wheel of Luck (Figma nodes 1:217 idle / 1:227 on cooldown). */
 export default function WheelScreen() {
@@ -52,6 +59,9 @@ export default function WheelScreen() {
   const angle = useSharedValue(0);
   const [phase, setPhase] = useState<Phase>('idle');
   const [result, setResult] = useState<WheelReward | null>(null);
+  // Replay counters for the wheel's own celebration -- a prize flashes the rim
+  // and throws confetti, a FAIL shudders instead.
+  const [resultIds, setResultIds] = useState({ win: 0, fail: 0 });
 
   // The cooldown and the free-spin count both live in the player store; this
   // screen reads them imperatively and re-renders on a 1s tick, so the button
@@ -63,8 +73,15 @@ export default function WheelScreen() {
   }, []);
 
   const landedRef = useRef(0);
+  const revealTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => stopSpinSound, []);
+  useEffect(
+    () => () => {
+      if (revealTimer.current) clearTimeout(revealTimer.current);
+    },
+    [],
+  );
 
   const freeSpins = getFreeSpins();
   const hasFreeSpin = freeSpins > 0;
@@ -85,8 +102,17 @@ export default function WheelScreen() {
     } else {
       playSfx('wheel-fail');
     }
-    setResult(reward);
-    setPhase('idle');
+
+    const won = reward.kind !== 'nothing';
+    setResultIds((ids) => (won ? { ...ids, win: ids.win + 1 } : { ...ids, fail: ids.fail + 1 }));
+
+    // The result card covers the whole screen, so it waits for the wheel to
+    // finish celebrating -- otherwise the confetti is born behind a scrim.
+    setPhase('revealing');
+    revealTimer.current = setTimeout(() => {
+      setResult(reward);
+      setPhase('idle');
+    }, REVEAL_DELAY_MS);
     tick();
   }, []);
 
@@ -131,7 +157,12 @@ export default function WheelScreen() {
           { paddingTop: topBarHeight, paddingBottom: insets.bottom + BOTTOM_GAP * scale },
         ]}>
         <View style={{ flex: SPACE_ABOVE }} />
-        <WheelOfLuck angle={angle} />
+        <WheelOfLuck
+          angle={angle}
+          spinning={phase === 'spinning'}
+          winId={resultIds.win}
+          failId={resultIds.fail}
+        />
         <View style={{ flex: SPACE_BELOW }} />
 
         <GameButton
