@@ -34,7 +34,12 @@ type BillingState = {
 const BillingContext = createContext<BillingState | null>(null);
 
 function productDisplayPrice(products: Product[], productId: string): string | undefined {
-  return products.find((product) => product.id === productId)?.displayPrice;
+  // The store can hand back a product with a blank `displayPrice` (e.g. Play
+  // Billing's NO_OFFERS_AVAILABLE, or pricing not yet propagated) -- treat that
+  // as "no price yet" so callers fall back to the pack's placeholder label
+  // instead of rendering an empty button.
+  const price = products.find((product) => product.id === productId)?.displayPrice;
+  return price && price.trim() ? price : undefined;
 }
 
 export function BillingProvider({ children }: { children: ReactNode }) {

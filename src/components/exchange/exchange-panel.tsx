@@ -12,7 +12,6 @@ import {
   useCoins,
   useUsd,
 } from '@/game/player';
-import { usePayout } from '@/game/payout';
 import { useDesignScale } from '@/hooks/use-design-scale';
 
 const COIN_ASSET = require('@/assets/images/menu/coin.png');
@@ -56,7 +55,6 @@ export function ExchangePanel({ onPlay, onAddPayout }: ExchangePanelProps) {
   const scale = useDesignScale();
   const coins = useCoins();
   const usd = useUsd();
-  const payout = usePayout();
 
   const coinProgress = Math.min(coins / COINS_PER_EXCHANGE, 1);
   const usdProgress = Math.min(usd / EXCHANGE_MIN_USD, 1);
@@ -79,7 +77,7 @@ export function ExchangePanel({ onPlay, onAddPayout }: ExchangePanelProps) {
       <View style={[styles.inner, { width: CONTENT_WIDTH * scale }]}>
         <View style={[styles.topGroup, { gap: 24 * scale }]}>
           <GameButton
-            label={payout ? 'Connected' : 'Add payout method'}
+            label="Add payout method"
             width={CONTENT_WIDTH}
             height={72}
             fontSize={24}
