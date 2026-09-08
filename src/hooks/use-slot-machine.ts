@@ -79,6 +79,11 @@ export function useSlotMachine() {
 
   useEffect(() => () => cancelTimers(), []);
 
+  // Leaving the screen mid-spin only cancels the pending timers above -- the
+  // spin rattle is a separate looping sound that keeps playing until told
+  // to stop, so it needs its own cleanup here (mirrors wheel.tsx).
+  useEffect(() => stopSpinSound, []);
+
   function cancelTimers() {
     for (const timer of timers.current) clearTimeout(timer);
     timers.current = [];

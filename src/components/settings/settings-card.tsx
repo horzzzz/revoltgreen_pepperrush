@@ -67,7 +67,11 @@ export function SettingsCard({
         },
       ]}>
       <View style={styles.header}>
-        <AppText weight="bold" style={[styles.title, { fontSize: 30 * scale }]}>
+        {/* The close button sits on the right, so the title's own box is
+            offset by that width to stay centred on the card. */}
+        <AppText
+          weight="bold"
+          style={[styles.title, { fontSize: 30 * scale, marginLeft: CLOSE_SIZE * scale }]}>
           Settings
         </AppText>
         <PressableScale onPress={onClose} sfx="ui-back" accessibilityRole="button" accessibilityLabel="Close">
@@ -137,6 +141,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   title: {
+    flex: 1,
+    textAlign: 'center',
     textTransform: 'uppercase',
   },
   group: {

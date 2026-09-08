@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   cancelAnimation,
@@ -61,7 +61,20 @@ export function Reel({ cells, wildTop, spinning, stopDelay, winning, dimLosers }
   const fillerOpacity = useSharedValue(0);
   const resultOpacity = useSharedValue(1);
 
+  // The very first mount already has `spinning === false` (the machine opens
+  // idle), so without this the drop-in/settle animation would fire on screen
+  // open too. Skip it just this once -- the board should simply be there.
+  const isFirstMount = useRef(true);
+
   useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      dropY.value = 0;
+      resultOpacity.value = 1;
+      fillerOpacity.value = 0;
+      return;
+    }
+
     if (spinning) {
       resultOpacity.value = 0;
       fillerOpacity.value = 1;
