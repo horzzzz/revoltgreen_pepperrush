@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import { useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -37,6 +38,32 @@ export function SpinButton({
   const scale = useDesignScale();
   const auto = autospinLeft > 0;
   const idle = !disabled && !auto;
+
+  // A hold that turns into autospin ends with the finger lifting, and RN
+  // reports that lift as a press. Without this, releasing the hold immediately
+  // fires `onStopAuto` and kills the autospin you just started. The flag is
+  // set when the long-press fires and swallows exactly the one press that
+  // closes the same gesture; every press after that (reset in `onPressIn`)
+  // counts as a real tap again.
+  const startedAutoRef = useRef(false);
+
+  const handlePressIn = () => {
+    startedAutoRef.current = false;
+  };
+
+  const handleLongPress = () => {
+    startedAutoRef.current = true;
+    onHold();
+  };
+
+  const handlePress = () => {
+    if (startedAutoRef.current) {
+      startedAutoRef.current = false;
+      return;
+    }
+    if (auto) onStopAuto();
+    else onSpin();
+  };
   // The button waiting to be pressed: a deeper breath than the app's other
   // idle pulses, backed by a green halo that swells behind the plate -- the
   // spin button is the one control the whole screen is built around, so it
@@ -53,8 +80,9 @@ export function SpinButton({
   return (
     <View style={[styles.container, { gap: CAPTION_GAP * scale }]}>
       <PressableScale
-        onPress={auto ? onStopAuto : onSpin}
-        onLongPress={auto ? undefined : onHold}
+        onPressIn={handlePressIn}
+        onPress={handlePress}
+        onLongPress={auto ? undefined : handleLongPress}
         delayLongPress={HOLD_MS}
         disabled={disabled && !auto}
         accessibilityRole="button"
