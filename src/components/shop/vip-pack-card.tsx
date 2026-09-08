@@ -50,7 +50,9 @@ export function VipPackCard({ pack, priceLabel, busy, disabled, onBuy }: VipPack
           <AppText weight="bold" style={[styles.title, { fontSize: 20 * scale }]}>
             {pack.title}
           </AppText>
-          <AppText style={{ fontSize: 12 * scale }}>{pack.description}</AppText>
+          <AppText style={{ fontSize: 12 * scale, lineHeight: 16 * scale }}>
+            {pack.description}
+          </AppText>
         </View>
       </View>
 

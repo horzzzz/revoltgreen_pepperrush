@@ -161,25 +161,6 @@ export function useSlotMachine() {
     }
   }
 
-  /**
-   * Puts the machine back to a clean idle from wherever it is -- including
-   * mid-flight, which is why it clears `busyRef` and the phase by hand: the
-   * `resolve` timer that would normally do that is one of the timers being
-   * dropped here, and without this the machine would stay "busy" forever and
-   * silently refuse every future spin.
-   */
-  function reset() {
-    cancelTimers();
-    stopSpinSound();
-    busyRef.current = false;
-    setAutospinLeft(0);
-    setPhase('idle');
-    setWin(0);
-    setLines([]);
-    setWinning(NO_WINS);
-    setPopup((current) => (current.live ? { ...current, live: false } : current));
-  }
-
   function spin() {
     if (busyRef.current) return;
     if (!spendCoins(betRef.current)) {
@@ -258,8 +239,6 @@ export function useSlotMachine() {
       popupLive: popup.live,
       potBump,
     },
-    /** Back to a clean idle, spin in flight included -- the pause menu's Restart. */
-    reset,
   };
 }
 

@@ -4,9 +4,12 @@ import { Alert, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/ui/app-text';
 import { GameButton } from '@/components/ui/game-button';
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { GameColors, SplashColors } from '@/constants/theme';
 import {
+  canConvertCoins,
   COINS_PER_EXCHANGE,
+  convertCoinsToUsd,
   EXCHANGE_MIN_USD,
   USD_PER_EXCHANGE,
   useCoins,
@@ -30,6 +33,19 @@ const PREVIEW_ICON_SIZE = 50;
 /** Node 1:901 -- the card, and node I1:901;1:590's inner column width. */
 const CARD = { width: 382, padding: 24, radius: 20 } as const;
 const CONTENT_WIDTH = 334;
+
+/**
+ * The rate button's own type sizes, and the correction the arrow needs.
+ *
+ * `→` is drawn around the maths axis -- its ink centre sits at +0.350 em where
+ * the digits' sits at +0.314 em -- so centring the two text boxes against each
+ * other still leaves the arrow riding about a point high. Push it back down by
+ * exactly that difference.
+ */
+const RATE_FONT_SIZE = 36;
+const ARROW_FONT_SIZE = 28;
+const ARROW_NUDGE = (0.35 - 0.314) * ARROW_FONT_SIZE;
+
 /** Same green as the progress bar's fill and every outline on the screen. */
 const GREEN = SplashColors.fillEdge;
 
@@ -59,6 +75,9 @@ export function ExchangePanel({ onPlay, onAddPayout }: ExchangePanelProps) {
   const coinProgress = Math.min(coins / COINS_PER_EXCHANGE, 1);
   const usdProgress = Math.min(usd / EXCHANGE_MIN_USD, 1);
   const unlocked = usd >= EXCHANGE_MIN_USD;
+  // Reads the store rather than `coins` so the button and the mutation agree
+  // on one rule; `coins` is what re-renders this when the balance moves.
+  const canConvert = canConvertCoins();
 
   const exchange = () => {
     Alert.alert('Exchange', `Your payout request for $${group(usd)} has been received.`);
@@ -109,12 +128,34 @@ export function ExchangePanel({ onPlay, onAddPayout }: ExchangePanelProps) {
             <GameButton label="Play to start" width={160} height={55} fontSize={16} onPress={onPlay} />
           </View>
 
-          {/* Conversion rate (node I1:901;1:601). */}
-          <View style={[styles.rate, { gap: 12 * scale }]}>
-            <AppText style={{ fontSize: 36 * scale }}>{group(COINS_PER_EXCHANGE)}</AppText>
-            <AppText style={{ fontSize: 28 * scale }}>{'→'}</AppText>
-            <AppText style={{ fontSize: 36 * scale }}>${USD_PER_EXCHANGE}</AppText>
-          </View>
+          {/* Conversion rate (node I1:901;1:601) -- the control that performs
+              the conversion. Coins used to roll over into dollars on their own
+              the instant the balance crossed a batch; now one press buys one
+              batch, so the player chooses when (and how much) to convert. */}
+          <PressableScale
+            onPress={convertCoinsToUsd}
+            disabled={!canConvert}
+            accessibilityRole="button"
+            accessibilityLabel={`Exchange ${group(COINS_PER_EXCHANGE)} coins for $${USD_PER_EXCHANGE}`}
+            style={[
+              styles.rate,
+              {
+                gap: 12 * scale,
+                borderWidth: 2 * scale,
+                borderRadius: 10 * scale,
+                paddingHorizontal: 24 * scale,
+                paddingVertical: 6 * scale,
+              },
+              !canConvert && styles.rateLocked,
+            ]}>
+            <AppText style={{ fontSize: RATE_FONT_SIZE * scale }}>
+              {group(COINS_PER_EXCHANGE)}
+            </AppText>
+            <AppText style={{ fontSize: ARROW_FONT_SIZE * scale, marginTop: ARROW_NUDGE * scale }}>
+              {'→'}
+            </AppText>
+            <AppText style={{ fontSize: RATE_FONT_SIZE * scale }}>${USD_PER_EXCHANGE}</AppText>
+          </PressableScale>
 
           {/* Payout methods (node I1:901;1:605) -- decorative. */}
           <View style={styles.rowBetween}>
@@ -233,6 +274,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    borderColor: GREEN,
+  },
+  /** Not enough coins banked for a batch -- same treatment as a dimmed plate. */
+  rateLocked: {
+    opacity: 0.5,
   },
   coinTrack: {
     borderColor: GREEN,

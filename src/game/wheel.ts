@@ -20,9 +20,22 @@ export const WHEEL_SECTORS = [
 
 export const SECTOR_ANGLE = 360 / WHEEL_SECTORS.length;
 
-/** Full turns the wheel makes before settling, so a spin reads as a spin. */
-export const SPIN_TURNS = 5;
-export const SPIN_MS = 4200;
+/**
+ * How long the disc turns, and how far it gets in that time.
+ *
+ * The duration is pinned to the rattle (`wheel-spin.m4a`, ~2.39 s -- see
+ * `SPIN_SOURCE` in `src/game/audio/sfx.ts`), which is a one-shot, not a loop:
+ * at the old 4200 ms the clip ran out around the 57% mark and the last second
+ * and a half of the spin played in silence. Landing just inside the clip means
+ * the rattle is still going when the disc settles, and `stopSpinSound()` fades
+ * out what is left of it instead of the sound simply disappearing.
+ *
+ * Turns came down with it (5 -> 3) so the wheel keeps the speed it had --
+ * `Easing.out(cubic)` starts at 3x the average, which is 3.9 rev/s here
+ * against 3.6 before -- rather than becoming a blur in the shorter window.
+ */
+export const SPIN_TURNS = 3;
+export const SPIN_MS = 3600;
 
 export { WHEEL_COOLDOWN_MS as SPIN_COOLDOWN_MS, formatCountdown } from '@/game/cooldown';
 

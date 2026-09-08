@@ -203,9 +203,9 @@ export function playSfx(id: SfxId, options?: SfxOptions): void {
 
 /**
  * Kept as `start`/`stopSpinSound` for both the slot machine and the Wheel of
- * Luck's sake, but the clip is a one-shot: `wheel-spin.m4a` (~2.4 s) is
- * shorter than either spin (SPIN_TOTAL_MS in board-layout.ts, SPIN_MS in
- * wheel.ts), so looping it would replay the rattle a second time mid-spin.
+ * Luck's sake, but the clip is a one-shot: `wheel-spin.m4a` (~2.39 s) outlasts
+ * either spin (SPIN_TOTAL_MS in board-layout.ts, SPIN_MS in wheel.ts), so
+ * looping it would replay the rattle a second time mid-spin.
  */
 export function startSpinSound(): void {
   if (!initialized || !ctx || !spinGain || !spinBuffer) return;

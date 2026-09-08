@@ -70,7 +70,9 @@ export function MaintenanceCard({ onClose, onRetry }: MaintenanceCardProps) {
             styles.copyBox,
             { borderWidth: 2 * scale, borderRadius: 15 * scale, padding: 12 * scale },
           ]}>
-          <AppText style={[styles.copy, { fontSize: 20 * scale }]}>{COPY}</AppText>
+          <AppText style={[styles.copy, { fontSize: 20 * scale, lineHeight: 26 * scale }]}>
+            {COPY}
+          </AppText>
         </View>
       </View>
 

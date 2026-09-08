@@ -28,10 +28,10 @@ export const STARTING_COINS = 100;
 export const DAILY_BONUS_COINS = 1000;
 
 /**
- * Exchange screen (Figma node 1:898). Every full 10,000 coins rolls over into
- * the dollar balance at $5 a batch the moment they land -- there is no button
- * for it. The Exchange button itself only unlocks once the dollar balance
- * reaches $100.
+ * Exchange screen (Figma node 1:898). 10,000 coins buy $5, one batch per press
+ * of the rate button -- the rollover used to happen on its own the moment the
+ * coins landed, which spent the player's balance for them mid-spin. The
+ * Exchange button itself only unlocks once the dollar balance reaches $100.
  */
 export const COINS_PER_EXCHANGE = 10_000;
 export const USD_PER_EXCHANGE = 5;
@@ -112,7 +112,6 @@ export async function hydratePlayer() {
       state.freeSpins = Math.min(MAX_FREE_SPINS, Math.max(0, Math.floor(saved.freeSpins)));
     if (isFiniteNumber(saved.lastDailyClaimAt)) state.lastDailyClaimAt = saved.lastDailyClaimAt;
     if (isFiniteNumber(saved.lastWheelSpinAt)) state.lastWheelSpinAt = saved.lastWheelSpinAt;
-    settleExchange({ silent: true });
     emit();
   } catch {
     // Corrupt record -- keep the defaults.
@@ -129,22 +128,27 @@ export function getUsd() {
   return state.usd;
 }
 
+/** Whether there are enough coins banked to buy one $5 batch. */
+export function canConvertCoins() {
+  return state.coins >= COINS_PER_EXCHANGE;
+}
+
 /**
- * Rolls every whole 10,000 coins over into the dollar balance at $5 a batch.
- * Called after any credit to the coin balance, so the Exchange screen's coin
- * progress bar tops out and resets on its own.
+ * Buys one batch: 10,000 coins off the coin balance, $5 onto the dollar one.
+ * Driven by the rate button on the Exchange screen (`exchange-panel.tsx`) --
+ * one press, one batch, so a player sitting on 30,000 coins decides how much
+ * of it to convert instead of the store deciding for them.
  *
- * `silent` is set from `hydratePlayer()`, which re-runs this against whatever
- * was saved last session purely to correct old state -- nothing actually
- * happened just now, so it shouldn't cue a reward sound before the app has
- * even finished loading.
+ * Returns whether it went through; a balance under the batch size is a no-op.
  */
-function settleExchange(options?: { silent?: boolean }) {
-  if (state.coins < COINS_PER_EXCHANGE) return;
-  const batches = Math.floor(state.coins / COINS_PER_EXCHANGE);
-  state.coins = toCents(state.coins - batches * COINS_PER_EXCHANGE);
-  state.usd = toCents(state.usd + batches * USD_PER_EXCHANGE);
-  if (!options?.silent) playSfx('reward-claim');
+export function convertCoinsToUsd() {
+  if (!canConvertCoins()) return false;
+  state.coins = toCents(state.coins - COINS_PER_EXCHANGE);
+  state.usd = toCents(state.usd + USD_PER_EXCHANGE);
+  playSfx('reward-claim');
+  emit();
+  persist();
+  return true;
 }
 
 /** Whether the dollar balance has reached the Exchange button's unlock floor. */
@@ -155,7 +159,6 @@ export function canExchange() {
 export function addCoins(amount: number) {
   if (amount <= 0) return;
   state.coins = toCents(state.coins + amount);
-  settleExchange();
   emit();
   persist();
 }
@@ -210,7 +213,6 @@ export function claimDailyBonus() {
   if (!canClaimDaily()) return false;
   state.lastDailyClaimAt = Date.now();
   state.coins = toCents(state.coins + DAILY_BONUS_COINS);
-  settleExchange();
   emit();
   persist();
   return true;

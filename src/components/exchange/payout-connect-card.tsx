@@ -142,5 +142,9 @@ const styles = StyleSheet.create({
     color: SplashColors.text,
     fontFamily: Fonts.regular,
     width: '100%',
+    // The one piece of text that doesn't go through `AppText` -- it needs the
+    // same Android metric fix, or the value sits low inside the field.
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
 });

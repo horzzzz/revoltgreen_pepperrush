@@ -36,9 +36,11 @@ export default function ConnectPayoutScreen() {
   const save = (values: Record<string, string>) => {
     connectPayout(method.key, values);
     playSfx('unlock');
-    // Drop the modal and the method list, landing back on Exchange where the
-    // top button now reads "Connected".
-    router.dismissTo('/exchange');
+    // Only this modal goes away. It used to unwind all the way to Exchange,
+    // which threw the player out of the method list they were working in --
+    // the list is still behind the card and already re-renders the saved
+    // method as "Connected", so dropping the card is the whole job.
+    close();
   };
 
   return (

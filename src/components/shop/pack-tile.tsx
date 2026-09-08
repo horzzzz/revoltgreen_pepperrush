@@ -49,7 +49,7 @@ export function PackTile({ pack, icon, priceLabel, busy, disabled, onBuy }: Pack
           <AppText weight="bold" style={[styles.title, { fontSize: 16 * scale }]}>
             {pack.title}
           </AppText>
-          <AppText style={[styles.description, { fontSize: 12 * scale }]}>
+          <AppText style={[styles.description, { fontSize: 12 * scale, lineHeight: 16 * scale }]}>
             {pack.description}
           </AppText>
         </View>

@@ -94,10 +94,11 @@ export const SFX_GAIN: Partial<Record<SfxId, number>> = {
 
 /**
  * The rattle used for both the slot reels and the Wheel of Luck -- supplied
- * by the project owner, not fetched by `fetch-audio.sh`. At ~2.4 s it is a
- * one-shot rather than a loop: shorter than either spin (SPIN_TOTAL_MS in
- * board-layout.ts, SPIN_MS in wheel.ts), so looping it would replay the
- * rattle mid-spin.
+ * by the project owner, not fetched by `fetch-audio.sh`. At ~2.39 s it is a
+ * one-shot rather than a loop, and both spins are timed to finish inside it
+ * (SPIN_TOTAL_MS ~1.51 s in board-layout.ts, SPIN_MS 2.3 s in wheel.ts): the
+ * rattle is still sounding when the reels/disc settle and `stopSpinSound()`
+ * fades out what is left, so a spin never runs on in silence.
  */
 export const SPIN_SOURCE: number = require('@/assets/audio/wheel-spin.m4a');
 export const MUSIC_THEME_SOURCE: number = require('@/assets/audio/music-theme.m4a');

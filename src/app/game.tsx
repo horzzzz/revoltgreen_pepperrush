@@ -65,17 +65,6 @@ export default function GameScreen() {
     setPaused(true);
   };
 
-  // Restart drops whatever the reels were showing so the round comes back
-  // clean, same as Play, just with the last result cleared first.
-  const restart = () => {
-    // `reset` covers stopping autospin, and also drops a spin that is still in
-    // flight -- Restart during a spin used to leave the reels to land into a
-    // round the player had already walked away from.
-    machine.reset();
-    machine.dismissOverlay();
-    setPaused(false);
-  };
-
   return (
     <View style={styles.container}>
       <Animated.View style={[StyleSheet.absoluteFill, shakeStyle]}>
@@ -192,7 +181,6 @@ export default function GameScreen() {
       {paused ? (
         <PauseMenu
           onResume={() => setPaused(false)}
-          onRestart={restart}
           onExchange={() => router.push('/exchange')}
           onSettings={() => router.push('/settings')}
           onMainMenu={() => router.back()}
